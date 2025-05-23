@@ -156,7 +156,8 @@ export default function SMForm() {
         category: finalCategory
       };
       
-      addRecord(finalData);
+      // 비동기 함수로 변경됨
+      await addRecord(finalData);
       
       // 제출 후 해당 카테고리의 다음 번호 증가
       setNextTaskNumbers(prev => ({

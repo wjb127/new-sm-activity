@@ -52,9 +52,14 @@ export default function SMList() {
   };
 
   // 삭제 확인 함수
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('정말로 이 SM 이력을 삭제하시겠습니까?')) {
-      deleteRecord(id);
+      try {
+        await deleteRecord(id);
+      } catch (error) {
+        console.error('삭제 중 오류가 발생했습니다:', error);
+        alert('삭제 중 오류가 발생했습니다.');
+      }
     }
   };
 
