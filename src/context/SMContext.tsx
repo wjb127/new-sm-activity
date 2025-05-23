@@ -17,6 +17,7 @@ interface SMContextType {
   deleteRecord: (id: string) => Promise<void>;
   updateRecord: (id: string, record: SMRecordInput) => Promise<void>;
   isLoading: boolean;
+  error: string | null;
 }
 
 const SMContext = createContext<SMContextType | undefined>(undefined);
@@ -24,39 +25,101 @@ const SMContext = createContext<SMContextType | undefined>(undefined);
 export function SMProvider({ children }: { children: ReactNode }) {
   const [records, setRecords] = useState<SMRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // API를 통해 데이터 불러오기
   useEffect(() => {
     async function loadRecords() {
       try {
         setIsLoading(true);
+        setError(null);
+        console.log('데이터 로딩 시작...');
         
         // API를 통해 데이터 가져오기
         const data = await fetchRecords();
+        console.log('API에서 가져온 데이터:', data);
         
-        if (data) {
-          setRecords(data as SMRecord[]);
+        // API 호출이 성공하고 데이터가 있는 경우
+        if (data && data.length > 0) {
+          // 데이터베이스에서 받은 데이터를 SMRecord 타입으로 변환
+          const mappedData = data.map((item: any) => ({
+            id: item.id,
+            category: item.category || '대시보드',
+            taskNo: item.taskno || '',
+            year: item.year || '',
+            month: item.month || '',
+            receiptDate: item.receiptdate || '',
+            requestPath: item.requestpath || '',
+            requestTeam: item.requestteam || '',
+            requester: item.requester || '',
+            requestContent: item.requestcontent || '',
+            processContent: item.processcontent || '',
+            note: item.note || '',
+            smManager: item.smmanager || '',
+            startDate: item.startdate || '',
+            deployDate: item.deploydate || '',
+            createdAt: item.createdat || new Date().toISOString()
+          }));
+          
+          setRecords(mappedData);
+          console.log('API 데이터 로드 성공, 레코드 수:', mappedData.length);
+          
+          // 백업 저장
+          localStorage.setItem('smRecords', JSON.stringify(mappedData));
+          console.log('로컬 스토리지에 백업 저장 완료');
+        } 
+        // API 호출은 성공했지만 데이터가 없는 경우 로컬 스토리지에서 불러오기
+        else {
+          console.log('API에서 데이터를 찾을 수 없음, 로컬 스토리지에서 불러오기 시도');
+          try {
+            const savedRecords = localStorage.getItem('smRecords');
+            if (savedRecords) {
+              const parsedRecords = JSON.parse(savedRecords) as LegacySMRecord[];
+              console.log('로컬 스토리지에서 불러온 데이터:', parsedRecords);
+              
+              const updatedRecords = parsedRecords.map(record => ({
+                ...record,
+                category: record.category || '대시보드'
+              }));
+              
+              setRecords(updatedRecords as SMRecord[]);
+              console.log('로컬 스토리지에서 데이터 로드 성공, 레코드 수:', updatedRecords.length);
+            } else {
+              console.log('로컬 스토리지에 데이터가 없음');
+            }
+          } catch (localError) {
+            console.error('로컬 데이터 불러오기 오류:', localError);
+          }
         }
       } catch (error) {
         console.error('데이터 불러오기 오류:', error);
         
         // API 연결 실패 시 로컬 스토리지에서 백업 데이터 불러오기
+        console.log('API 연결 실패, 로컬 스토리지에서 불러오기 시도');
         try {
           const savedRecords = localStorage.getItem('smRecords');
           if (savedRecords) {
             const parsedRecords = JSON.parse(savedRecords) as LegacySMRecord[];
+            console.log('로컬 스토리지에서 불러온 데이터:', parsedRecords);
+            
             const updatedRecords = parsedRecords.map(record => ({
               ...record,
               category: record.category || '대시보드'
             }));
             
             setRecords(updatedRecords as SMRecord[]);
+            console.log('로컬 스토리지에서 데이터 로드 성공, 레코드 수:', updatedRecords.length);
+          } else {
+            console.log('로컬 스토리지에 데이터가 없음');
+            setError('데이터를 불러올 수 없습니다. 로컬 스토리지에도 데이터가 없습니다.');
           }
         } catch (localError) {
           console.error('로컬 데이터 불러오기 오류:', localError);
+          setError('데이터를 불러올 수 없습니다. 로컬 스토리지 접근에도 실패했습니다.');
         }
       } finally {
         setIsLoading(false);
+        console.log('데이터 로딩 완료');
       }
     }
     
@@ -68,6 +131,7 @@ export function SMProvider({ children }: { children: ReactNode }) {
     if (!isLoading) {
       try {
         localStorage.setItem('smRecords', JSON.stringify(records));
+        console.log('레코드 상태 변경, 로컬 스토리지에 백업 저장 완료');
       } catch (error) {
         console.error('로컬 데이터 저장 오류:', error);
       }
@@ -76,36 +140,95 @@ export function SMProvider({ children }: { children: ReactNode }) {
 
   const addRecord = async (record: SMRecordInput) => {
     try {
+      setError(null);
+      console.log('=== SM 이력 등록 시작 ===');
+      console.log('입력된 레코드 데이터:', record);
+      
       const newRecord: SMRecord = {
         ...record,
         id: uuidv4(),
         createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       };
       
-      // API를 통해 데이터 추가
-      await addRecordApi(newRecord);
+      console.log('생성된 새 레코드 (ID 포함):', newRecord);
       
-      setRecords(prevRecords => [...prevRecords, newRecord]);
+      // API를 통해 데이터 추가
+      const result = await addRecordApi(newRecord);
+      console.log('API 추가 결과 반환값:', result);
+      
+      // 결과가 성공적으로 반환되었는지 확인
+      if (result) {
+        // 데이터베이스에서 받은 데이터를 SMRecord 타입으로 변환
+        const mappedResult: SMRecord = {
+          id: result.id,
+          category: result.category || newRecord.category,
+          taskNo: result.taskno || newRecord.taskNo,
+          year: result.year || newRecord.year,
+          month: result.month || newRecord.month,
+          receiptDate: result.receiptdate || newRecord.receiptDate,
+          requestPath: result.requestpath || newRecord.requestPath,
+          requestTeam: result.requestteam || newRecord.requestTeam,
+          requester: result.requester || newRecord.requester,
+          requestContent: result.requestcontent || newRecord.requestContent,
+          processContent: result.processcontent || newRecord.processContent,
+          note: result.note || newRecord.note,
+          smManager: result.smmanager || newRecord.smManager,
+          startDate: result.startdate || newRecord.startDate,
+          deployDate: result.deploydate || newRecord.deployDate,
+          createdAt: result.createdat || newRecord.createdAt
+        };
+        
+        setRecords(prevRecords => [...prevRecords, mappedResult]);
+        console.log('=== SM 이력 등록 성공 ===');
+        console.log('현재 총 레코드 수:', records.length + 1);
+      } else {
+        console.error('=== API에서 레코드 추가 실패 ===');
+        // API 실패 시에도 로컬에는 추가
+        setRecords(prevRecords => [...prevRecords, newRecord]);
+      }
     } catch (error) {
-      console.error('레코드 추가 오류:', error);
-      throw error;
+      console.error('=== SM 이력 등록 오류 ===', error);
+      // 오류 발생 시에도 로컬에 추가
+      const newRecord: SMRecord = {
+        ...record,
+        id: uuidv4(),
+        createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+      };
+      setRecords(prevRecords => [...prevRecords, newRecord]);
+      setError('API 연결에 실패했습니다. 데이터는 로컬 스토리지에만 저장됩니다.');
     }
   };
 
   const deleteRecord = async (id: string) => {
     try {
-      // API를 통해 데이터 삭제
-      await deleteRecordApi(id);
+      setError(null);
+      console.log('레코드 삭제 시작, ID:', id);
       
-      setRecords(prevRecords => prevRecords.filter(record => record.id !== id));
+      // API를 통해 데이터 삭제
+      const success = await deleteRecordApi(id);
+      console.log('API 삭제 결과:', success);
+      
+      if (success) {
+        setRecords(prevRecords => prevRecords.filter(record => record.id !== id));
+        console.log('레코드 삭제 성공');
+      } else {
+        console.error('API에서 레코드 삭제 실패');
+        // API 실패 시에도 로컬에서는 삭제
+        setRecords(prevRecords => prevRecords.filter(record => record.id !== id));
+      }
     } catch (error) {
       console.error('레코드 삭제 오류:', error);
-      throw error;
+      // 오류 발생 시에도 로컬에서 삭제
+      setRecords(prevRecords => prevRecords.filter(record => record.id !== id));
+      setError('API 연결에 실패했습니다. 데이터는 로컬 스토리지에서만 삭제됩니다.');
     }
   };
 
   const updateRecord = async (id: string, updatedRecord: SMRecordInput) => {
     try {
+      setError(null);
+      console.log('레코드 업데이트 시작, ID:', id, '데이터:', updatedRecord);
+      
       const recordToUpdate = {
         ...updatedRecord,
         id,
@@ -113,23 +236,76 @@ export function SMProvider({ children }: { children: ReactNode }) {
       };
       
       // API를 통해 데이터 업데이트
-      await updateRecordApi(id, recordToUpdate);
+      const result = await updateRecordApi(id, recordToUpdate);
+      console.log('API 업데이트 결과:', result);
       
+      if (result) {
+        // 데이터베이스에서 받은 데이터를 SMRecord 타입으로 변환
+        const existingRecord = records.find(r => r.id === id);
+        const mappedResult: SMRecord = {
+          id: result.id || id,
+          category: result.category || updatedRecord.category,
+          taskNo: result.taskno || updatedRecord.taskNo,
+          year: result.year || updatedRecord.year,
+          month: result.month || updatedRecord.month,
+          receiptDate: result.receiptdate || updatedRecord.receiptDate,
+          requestPath: result.requestpath || updatedRecord.requestPath,
+          requestTeam: result.requestteam || updatedRecord.requestTeam,
+          requester: result.requester || updatedRecord.requester,
+          requestContent: result.requestcontent || updatedRecord.requestContent,
+          processContent: result.processcontent || updatedRecord.processContent,
+          note: result.note || updatedRecord.note,
+          smManager: result.smmanager || updatedRecord.smManager,
+          startDate: result.startdate || updatedRecord.startDate,
+          deployDate: result.deploydate || updatedRecord.deployDate,
+          createdAt: result.createdat || (existingRecord ? existingRecord.createdAt : new Date().toISOString())
+        };
+        
+        setRecords(
+          prevRecords => prevRecords.map(record => 
+            record.id === id ? mappedResult : record
+          )
+        );
+        console.log('레코드 업데이트 성공');
+      } else {
+        console.error('API에서 레코드 업데이트 실패');
+        // API 실패 시에도 로컬에서는 업데이트
+        const existingRecord = records.find(r => r.id === id);
+        setRecords(
+          prevRecords => prevRecords.map(record => 
+            record.id === id 
+              ? { 
+                  ...recordToUpdate as SMRecord, 
+                  createdAt: existingRecord ? existingRecord.createdAt : new Date().toISOString() 
+                } 
+              : record
+          )
+        );
+      }
+    } catch (error) {
+      console.error('레코드 업데이트 오류:', error);
+      // 오류 발생 시에도 로컬에서 업데이트
+      const recordToUpdate = {
+        ...updatedRecord,
+        id,
+      };
+      const existingRecord = records.find(r => r.id === id);
       setRecords(
         prevRecords => prevRecords.map(record => 
           record.id === id 
-            ? { ...recordToUpdate, createdAt: record.createdAt } 
+            ? { 
+                ...recordToUpdate as SMRecord, 
+                createdAt: existingRecord ? existingRecord.createdAt : new Date().toISOString() 
+              } 
             : record
         )
       );
-    } catch (error) {
-      console.error('레코드 업데이트 오류:', error);
-      throw error;
+      setError('API 연결에 실패했습니다. 데이터는 로컬 스토리지에서만 업데이트됩니다.');
     }
   };
 
   return (
-    <SMContext.Provider value={{ records, addRecord, deleteRecord, updateRecord, isLoading }}>
+    <SMContext.Provider value={{ records, addRecord, deleteRecord, updateRecord, isLoading, error }}>
       {children}
     </SMContext.Provider>
   );
