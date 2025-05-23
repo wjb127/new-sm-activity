@@ -42,24 +42,24 @@ export function SMProvider({ children }: { children: ReactNode }) {
         // API 호출이 성공하고 데이터가 있는 경우
         if (data && data.length > 0) {
           // 데이터베이스에서 받은 데이터를 SMRecord 타입으로 변환
-          const mappedData = data.map((item: any) => ({
-            id: item.id,
-            category: item.category || '대시보드',
-            taskNo: item.taskno || '',
-            year: item.year || '',
-            month: item.month || '',
-            receiptDate: item.receiptdate || '',
-            requestPath: item.requestpath || '',
-            requestTeam: item.requestteam || '',
-            requester: item.requester || '',
-            requestContent: item.requestcontent || '',
-            processContent: item.processcontent || '',
-            note: item.note || '',
-            smManager: item.smmanager || '',
-            startDate: item.startdate || '',
-            deployDate: item.deploydate || '',
-            createdAt: item.createdat || new Date().toISOString()
-          }));
+          const mappedData = data.map((item: Record<string, unknown>) => ({
+            id: String(item.id || ''),
+            category: String(item.category || '대시보드'),
+            taskNo: String(item.taskno || ''),
+            year: String(item.year || ''),
+            month: String(item.month || ''),
+            receiptDate: String(item.receiptdate || ''),
+            requestPath: String(item.requestpath || ''),
+            requestTeam: String(item.requestteam || ''),
+            requester: String(item.requester || ''),
+            requestContent: String(item.requestcontent || ''),
+            processContent: String(item.processcontent || ''),
+            note: String(item.note || ''),
+            smManager: String(item.smmanager || ''),
+            startDate: String(item.startdate || ''),
+            deployDate: String(item.deploydate || ''),
+            createdAt: String(item.createdat || new Date().toISOString())
+          })) as SMRecord[];
           
           setRecords(mappedData);
           console.log('API 데이터 로드 성공, 레코드 수:', mappedData.length);
@@ -160,22 +160,22 @@ export function SMProvider({ children }: { children: ReactNode }) {
       if (result) {
         // 데이터베이스에서 받은 데이터를 SMRecord 타입으로 변환
         const mappedResult: SMRecord = {
-          id: result.id,
-          category: result.category || newRecord.category,
-          taskNo: result.taskno || newRecord.taskNo,
-          year: result.year || newRecord.year,
-          month: result.month || newRecord.month,
-          receiptDate: result.receiptdate || newRecord.receiptDate,
-          requestPath: result.requestpath || newRecord.requestPath,
-          requestTeam: result.requestteam || newRecord.requestTeam,
-          requester: result.requester || newRecord.requester,
-          requestContent: result.requestcontent || newRecord.requestContent,
-          processContent: result.processcontent || newRecord.processContent,
-          note: result.note || newRecord.note,
-          smManager: result.smmanager || newRecord.smManager,
-          startDate: result.startdate || newRecord.startDate,
-          deployDate: result.deploydate || newRecord.deployDate,
-          createdAt: result.createdat || newRecord.createdAt
+          id: String(result.id || newRecord.id),
+          category: String(result.category || newRecord.category),
+          taskNo: String(result.taskno || newRecord.taskNo),
+          year: String(result.year || newRecord.year),
+          month: String(result.month || newRecord.month),
+          receiptDate: String(result.receiptdate || newRecord.receiptDate),
+          requestPath: String(result.requestpath || newRecord.requestPath),
+          requestTeam: String(result.requestteam || newRecord.requestTeam),
+          requester: String(result.requester || newRecord.requester),
+          requestContent: String(result.requestcontent || newRecord.requestContent),
+          processContent: String(result.processcontent || newRecord.processContent),
+          note: String(result.note || newRecord.note),
+          smManager: String(result.smmanager || newRecord.smManager),
+          startDate: String(result.startdate || newRecord.startDate),
+          deployDate: String(result.deploydate || newRecord.deployDate),
+          createdAt: String(result.createdat || newRecord.createdAt)
         };
         
         setRecords(prevRecords => [...prevRecords, mappedResult]);
@@ -229,10 +229,11 @@ export function SMProvider({ children }: { children: ReactNode }) {
       setError(null);
       console.log('레코드 업데이트 시작, ID:', id, '데이터:', updatedRecord);
       
-      const recordToUpdate = {
+      const existingRecord = records.find(r => r.id === id);
+      const recordToUpdate: SMRecord = {
         ...updatedRecord,
         id,
-        // createdAt은 변경하지 않음
+        createdAt: existingRecord ? existingRecord.createdAt : format(new Date(), 'yyyy-MM-dd HH:mm:ss')
       };
       
       // API를 통해 데이터 업데이트
@@ -241,24 +242,23 @@ export function SMProvider({ children }: { children: ReactNode }) {
       
       if (result) {
         // 데이터베이스에서 받은 데이터를 SMRecord 타입으로 변환
-        const existingRecord = records.find(r => r.id === id);
         const mappedResult: SMRecord = {
-          id: result.id || id,
-          category: result.category || updatedRecord.category,
-          taskNo: result.taskno || updatedRecord.taskNo,
-          year: result.year || updatedRecord.year,
-          month: result.month || updatedRecord.month,
-          receiptDate: result.receiptdate || updatedRecord.receiptDate,
-          requestPath: result.requestpath || updatedRecord.requestPath,
-          requestTeam: result.requestteam || updatedRecord.requestTeam,
-          requester: result.requester || updatedRecord.requester,
-          requestContent: result.requestcontent || updatedRecord.requestContent,
-          processContent: result.processcontent || updatedRecord.processContent,
-          note: result.note || updatedRecord.note,
-          smManager: result.smmanager || updatedRecord.smManager,
-          startDate: result.startdate || updatedRecord.startDate,
-          deployDate: result.deploydate || updatedRecord.deployDate,
-          createdAt: result.createdat || (existingRecord ? existingRecord.createdAt : new Date().toISOString())
+          id: String(result.id || id),
+          category: String(result.category || updatedRecord.category),
+          taskNo: String(result.taskno || updatedRecord.taskNo),
+          year: String(result.year || updatedRecord.year),
+          month: String(result.month || updatedRecord.month),
+          receiptDate: String(result.receiptdate || updatedRecord.receiptDate),
+          requestPath: String(result.requestpath || updatedRecord.requestPath),
+          requestTeam: String(result.requestteam || updatedRecord.requestTeam),
+          requester: String(result.requester || updatedRecord.requester),
+          requestContent: String(result.requestcontent || updatedRecord.requestContent),
+          processContent: String(result.processcontent || updatedRecord.processContent),
+          note: String(result.note || updatedRecord.note),
+          smManager: String(result.smmanager || updatedRecord.smManager),
+          startDate: String(result.startdate || updatedRecord.startDate),
+          deployDate: String(result.deploydate || updatedRecord.deployDate),
+          createdAt: String(result.createdat || (existingRecord ? existingRecord.createdAt : new Date().toISOString()))
         };
         
         setRecords(
@@ -270,12 +270,11 @@ export function SMProvider({ children }: { children: ReactNode }) {
       } else {
         console.error('API에서 레코드 업데이트 실패');
         // API 실패 시에도 로컬에서는 업데이트
-        const existingRecord = records.find(r => r.id === id);
         setRecords(
           prevRecords => prevRecords.map(record => 
             record.id === id 
               ? { 
-                  ...recordToUpdate as SMRecord, 
+                  ...recordToUpdate, 
                   createdAt: existingRecord ? existingRecord.createdAt : new Date().toISOString() 
                 } 
               : record
@@ -285,16 +284,17 @@ export function SMProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('레코드 업데이트 오류:', error);
       // 오류 발생 시에도 로컬에서 업데이트
-      const recordToUpdate = {
+      const existingRecord = records.find(r => r.id === id);
+      const recordToUpdate: SMRecord = {
         ...updatedRecord,
         id,
+        createdAt: existingRecord ? existingRecord.createdAt : format(new Date(), 'yyyy-MM-dd HH:mm:ss')
       };
-      const existingRecord = records.find(r => r.id === id);
       setRecords(
         prevRecords => prevRecords.map(record => 
           record.id === id 
             ? { 
-                ...recordToUpdate as SMRecord, 
+                ...recordToUpdate, 
                 createdAt: existingRecord ? existingRecord.createdAt : new Date().toISOString() 
               } 
             : record

@@ -1,26 +1,6 @@
 // Supabase API를 직접 호출하는 함수들을 정의합니다.
 import { SMRecord } from '@/types';
 
-// 데이터베이스 레코드 타입 (PostgreSQL은 소문자 컬럼명 사용)
-interface DBRecord {
-  id: string;
-  category: string;
-  taskNo: string;
-  year: string;
-  month: string;
-  receiptDate: string;
-  requestPath: string;
-  requestTeam: string;
-  requester: string;
-  requestContent: string;
-  processContent: string;
-  note: string;
-  smManager: string;
-  startDate: string;
-  deployDate: string;
-  createdat?: string;
-}
-
 // Supabase 프로젝트 URL과 API 키는 환경 변수에서 가져옵니다.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -38,20 +18,21 @@ const isSupabaseConfigured = () => {
   return supabaseUrl && supabaseKey && supabaseUrl !== 'https://your-supabase-project-url.supabase.co';
 };
 
-// 필드 이름을 모두 소문자로 변환하는 함수
-const convertFieldsToLowercase = (record: Record<string, any>): Record<string, any> => {
-  const result: Record<string, any> = {};
+// SMRecord를 Record<string, unknown>으로 변환하는 함수
+const convertSMRecordToRecord = (record: SMRecord): Record<string, unknown> => {
+  const result: Record<string, unknown> = {};
   
-  Object.keys(record).forEach(key => {
+  // SMRecord의 모든 속성을 Record<string, unknown>에 복사
+  Object.entries(record).forEach(([key, value]) => {
     // 키를 소문자로 변환하여 저장
-    result[key.toLowerCase()] = record[key];
+    result[key.toLowerCase()] = value;
   });
   
   return result;
 };
 
 // 레코드 조회 함수
-export async function fetchRecords(): Promise<any[]> {
+export async function fetchRecords(): Promise<Record<string, unknown>[]> {
   // 환경 변수가 설정되지 않았으면 빈 배열 반환
   if (!isSupabaseConfigured()) {
     console.warn('Supabase 환경 변수가 설정되지 않았습니다. 로컬 스토리지를 사용합니다.');
@@ -86,20 +67,20 @@ export async function fetchRecords(): Promise<any[]> {
 }
 
 // 레코드 추가 함수
-export async function addRecord(record: any): Promise<any> {
+export async function addRecord(record: SMRecord): Promise<Record<string, unknown>> {
   // 환경 변수가 설정되지 않았으면 레코드 그대로 반환
   if (!isSupabaseConfigured()) {
     console.warn('Supabase 환경 변수가 설정되지 않았습니다. 로컬 스토리지에만 저장됩니다.');
-    return record;
+    return convertSMRecordToRecord(record);
   }
 
   try {
     console.log('=== SM 이력 등록 API 호출 시작 ===');
     console.log('API 호출 URL:', `${supabaseUrl}/rest/v1/sm_records`);
     
-    // 필드 이름을 소문자로 변환
-    const lowercaseRecord = convertFieldsToLowercase(record);
-    console.log('추가할 레코드(소문자 변환):', lowercaseRecord);
+    // SMRecord를 Record<string, unknown>으로 변환 후 필드 이름을 소문자로 변환
+    const recordToSend = convertSMRecordToRecord(record);
+    console.log('추가할 레코드(소문자 변환):', recordToSend);
     
     const response = await fetch(`${supabaseUrl}/rest/v1/sm_records`, {
       method: 'POST',
@@ -107,7 +88,7 @@ export async function addRecord(record: any): Promise<any> {
         ...getHeaders(),
         'Prefer': 'return=representation'
       },
-      body: JSON.stringify(lowercaseRecord)
+      body: JSON.stringify(recordToSend)
     });
     
     console.log('API 응답 상태 코드:', response.status);
@@ -125,7 +106,7 @@ export async function addRecord(record: any): Promise<any> {
     return data[0] || record;
   } catch (error) {
     console.error('=== SM 이력 등록 API 오류 ===', error);
-    return record;
+    return convertSMRecordToRecord(record);
   }
 }
 
@@ -161,19 +142,19 @@ export async function deleteRecord(id: string): Promise<boolean> {
 }
 
 // 레코드 업데이트 함수
-export async function updateRecord(id: string, record: any): Promise<any> {
+export async function updateRecord(id: string, record: SMRecord): Promise<Record<string, unknown>> {
   // 환경 변수가 설정되지 않았으면 레코드 그대로 반환
   if (!isSupabaseConfigured()) {
     console.warn('Supabase 환경 변수가 설정되지 않았습니다. 로컬 스토리지에만 업데이트됩니다.');
-    return record;
+    return convertSMRecordToRecord(record);
   }
 
   try {
     console.log('API 호출 URL:', `${supabaseUrl}/rest/v1/sm_records?id=eq.${id}`);
     
-    // 필드 이름을 소문자로 변환
-    const lowercaseRecord = convertFieldsToLowercase(record);
-    console.log('업데이트할 레코드(소문자 변환):', lowercaseRecord);
+    // SMRecord를 Record<string, unknown>으로 변환 후 필드 이름을 소문자로 변환
+    const recordToSend = convertSMRecordToRecord(record);
+    console.log('업데이트할 레코드(소문자 변환):', recordToSend);
     
     const response = await fetch(`${supabaseUrl}/rest/v1/sm_records?id=eq.${id}`, {
       method: 'PATCH',
@@ -181,7 +162,7 @@ export async function updateRecord(id: string, record: any): Promise<any> {
         ...getHeaders(),
         'Prefer': 'return=representation'
       },
-      body: JSON.stringify(lowercaseRecord)
+      body: JSON.stringify(recordToSend)
     });
     
     console.log('API 응답 상태:', response.status);
@@ -198,6 +179,6 @@ export async function updateRecord(id: string, record: any): Promise<any> {
     return data[0] || record;
   } catch (error) {
     console.error('API 업데이트 오류:', error);
-    return record;
+    return convertSMRecordToRecord(record);
   }
 } 
