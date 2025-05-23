@@ -10,7 +10,7 @@ const tdStyle = "px-2 py-1 whitespace-nowrap text-xs font-medium text-gray-900";
 const tdContentStyle = "px-2 py-1 text-xs text-gray-900 max-w-[150px] truncate";
 
 export default function SMList() {
-  const { records, deleteRecord, isLoading } = useSM();
+  const { records, deleteRecord, isLoading, error } = useSM();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<keyof SMRecord>('receiptDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -124,6 +124,26 @@ export default function SMList() {
         <div className="flex flex-col items-center justify-center p-4">
           <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-2"></div>
           <p className="text-gray-600 font-medium text-sm">데이터를 불러오는 중입니다...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 오류가 있을 때 표시
+  if (error) {
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-md max-w-5xl mx-auto">
+        <div className="flex flex-col items-center justify-center p-4">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-red-600 font-medium text-base mb-1">데이터베이스 연결 오류</p>
+          <p className="text-gray-600 text-sm text-center">{error}</p>
+          <p className="text-gray-600 text-xs mt-2 text-center">
+            .env.local 파일에 올바른 Supabase 연결 정보가 설정되어 있는지 확인하세요.
+          </p>
         </div>
       </div>
     );

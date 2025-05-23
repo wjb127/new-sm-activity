@@ -16,7 +16,7 @@ const selectStyle = "w-full px-2 py-1 border border-gray-300 rounded-md focus:ou
 const categoryOptions: TaskCategory[] = ["대시보드", "PLAN", "기타"];
 
 export default function SMForm() {
-  const { addRecord, records, isLoading } = useSM();
+  const { addRecord, records, isLoading, error } = useSM();
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<SMRecordInput>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentYear, setCurrentYear] = useState('');
@@ -201,6 +201,26 @@ export default function SMForm() {
         <div className="flex flex-col items-center justify-center p-8">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
           <p className="text-gray-600 font-medium">데이터를 불러오는 중입니다...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 오류가 있을 때 표시
+  if (error) {
+    return (
+      <div className="bg-white p-4 rounded-lg shadow-md max-w-5xl mx-auto">
+        <div className="flex flex-col items-center justify-center p-4">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-red-600 font-medium text-base mb-1">데이터베이스 연결 오류</p>
+          <p className="text-gray-600 text-sm text-center">{error}</p>
+          <p className="text-gray-600 text-xs mt-2 text-center">
+            .env.local 파일에 올바른 Supabase 연결 정보가 설정되어 있는지 확인하세요.
+          </p>
         </div>
       </div>
     );
