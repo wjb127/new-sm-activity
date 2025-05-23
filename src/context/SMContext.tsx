@@ -4,7 +4,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import { SMRecord, SMRecordInput } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { fetchRecords, addRecord as addRecordApi, deleteRecord as deleteRecordApi, updateRecord as updateRecordApi } from '@/lib/supabase';
 
 // 기존 레코드 타입(category가 없을 수 있음)
 interface LegacySMRecord extends Omit<SMRecord, 'category'> {
@@ -25,21 +25,14 @@ export function SMProvider({ children }: { children: ReactNode }) {
   const [records, setRecords] = useState<SMRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Supabase에서 데이터 불러오기
+  // API를 통해 데이터 불러오기
   useEffect(() => {
-    async function fetchRecords() {
+    async function loadRecords() {
       try {
         setIsLoading(true);
         
-        // Supabase에서 데이터 가져오기
-        const { data, error } = await supabase
-          .from('sm_records')
-          .select('*')
-          .order('createdAt', { ascending: false });
-        
-        if (error) {
-          throw error;
-        }
+        // API를 통해 데이터 가져오기
+        const data = await fetchRecords();
         
         if (data) {
           setRecords(data as SMRecord[]);
@@ -47,7 +40,7 @@ export function SMProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('데이터 불러오기 오류:', error);
         
-        // Supabase 연결 실패 시 로컬 스토리지에서 백업 데이터 불러오기
+        // API 연결 실패 시 로컬 스토리지에서 백업 데이터 불러오기
         try {
           const savedRecords = localStorage.getItem('smRecords');
           if (savedRecords) {
@@ -67,7 +60,7 @@ export function SMProvider({ children }: { children: ReactNode }) {
       }
     }
     
-    fetchRecords();
+    loadRecords();
   }, []);
 
   // 로컬 스토리지에 백업 데이터 저장
@@ -89,14 +82,8 @@ export function SMProvider({ children }: { children: ReactNode }) {
         createdAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
       };
       
-      // Supabase에 데이터 추가
-      const { error } = await supabase
-        .from('sm_records')
-        .insert(newRecord);
-      
-      if (error) {
-        throw error;
-      }
+      // API를 통해 데이터 추가
+      await addRecordApi(newRecord);
       
       setRecords(prevRecords => [...prevRecords, newRecord]);
     } catch (error) {
@@ -107,15 +94,8 @@ export function SMProvider({ children }: { children: ReactNode }) {
 
   const deleteRecord = async (id: string) => {
     try {
-      // Supabase에서 데이터 삭제
-      const { error } = await supabase
-        .from('sm_records')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        throw error;
-      }
+      // API를 통해 데이터 삭제
+      await deleteRecordApi(id);
       
       setRecords(prevRecords => prevRecords.filter(record => record.id !== id));
     } catch (error) {
@@ -132,15 +112,8 @@ export function SMProvider({ children }: { children: ReactNode }) {
         // createdAt은 변경하지 않음
       };
       
-      // Supabase에서 데이터 업데이트
-      const { error } = await supabase
-        .from('sm_records')
-        .update(recordToUpdate)
-        .eq('id', id);
-      
-      if (error) {
-        throw error;
-      }
+      // API를 통해 데이터 업데이트
+      await updateRecordApi(id, recordToUpdate);
       
       setRecords(
         prevRecords => prevRecords.map(record => 
