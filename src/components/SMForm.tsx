@@ -371,7 +371,7 @@ export default function SMForm() {
         {/* 시스템 정보 섹션 */}
         <div className="border-b border-gray-200 pb-3">
           <h3 className="text-sm font-semibold text-gray-700 mb-2">시스템 정보</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">시스템(파트)</label>
               <input
@@ -401,7 +401,7 @@ export default function SMForm() {
               />
             </div>
 
-            <div className="md:col-span-3">
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">SLA SM Activity(상세)</label>
               <input
                 {...register('slaSmActivityDetail')}
