@@ -13,42 +13,69 @@ const getHeaders = () => ({
   'Prefer': 'return=minimal'
 });
 
-// 환경 변수가 설정되었는지 확인하는 함수
+// Supabase 환경 변수가 설정되어 있는지 확인
 const isSupabaseConfigured = () => {
-  return supabaseUrl && supabaseKey && supabaseUrl !== 'https://your-supabase-project-url.supabase.co';
+  return !!(supabaseUrl && supabaseKey);
 };
 
 // SMRecord를 Record<string, unknown>으로 변환하는 함수
 const convertSMRecordToRecord = (record: SMRecord): Record<string, unknown> => {
-  const result: Record<string, unknown> = {};
-  
-  // SMRecord의 모든 속성을 Record<string, unknown>에 복사
-  Object.entries(record).forEach(([key, value]) => {
-    // 키를 소문자로 변환하여 저장
-    result[key.toLowerCase()] = value;
-  });
-  
-  return result;
+  return {
+    id: record.id,
+    category: record.category,
+    taskno: record.taskNo,
+    year: record.year,
+    targetmonth: record.targetMonth,
+    receiptdate: record.receiptDate,
+    requestpath: record.requestPath,
+    workbasisnumber: record.workBasisNumber,
+    requestteam: record.requestTeam,
+    requestorgtype: record.requestOrgType,
+    requester: record.requester,
+    lguplusteamname: record.lgUplusTeamName,
+    systempart: record.systemPart,
+    targetsystemname: record.targetSystemName,
+    slasmactivity: record.slaSmActivity,
+    slasmactivitydetail: record.slaSmActivityDetail,
+    processtype: record.processType,
+    requestcontent: record.requestContent,
+    processcontent: record.processContent,
+    note: record.note,
+    smmanager: record.smManager,
+    startdate: record.startDate,
+    expecteddeploydate: record.expectedDeployDate,
+    deploycompleted: record.deployCompleted,
+    actualdeploydate: record.actualDeployDate,
+    worktimedays: record.workTimeDays,
+    worktimehours: record.workTimeHours,
+    worktimeminutes: record.workTimeMinutes,
+    totalmm: record.totalMM,
+    monthlyactualbillingmm: record.monthlyActualBillingMM,
+    errorfixrequired: record.errorFixRequired,
+    workreviewtarget: record.workReviewTarget,
+    workreviewweek: record.workReviewWeek,
+    createdat: record.createdAt
+  };
 };
 
 // 레코드 조회 함수
 export async function fetchRecords(): Promise<Record<string, unknown>[]> {
   // 환경 변수가 설정되지 않았으면 빈 배열 반환
   if (!isSupabaseConfigured()) {
-    console.warn('Supabase 환경 변수가 설정되지 않았습니다. 로컬 스토리지를 사용합니다.');
+    console.warn('Supabase 환경 변수가 설정되지 않았습니다. 로컬 스토리지에서 데이터를 불러옵니다.');
     return [];
   }
 
   try {
-    console.log('API 호출 URL:', `${supabaseUrl}/rest/v1/sm_records?order=createdat.desc`);
+    console.log('=== SM 이력 조회 API 호출 시작 ===');
+    console.log('API 호출 URL:', `${supabaseUrl}/rest/v1/sm_records`);
     
-    const response = await fetch(`${supabaseUrl}/rest/v1/sm_records?order=createdat.desc`, {
+    const response = await fetch(`${supabaseUrl}/rest/v1/sm_records`, {
       method: 'GET',
-      headers: getHeaders(),
-      cache: 'no-cache'
+      headers: getHeaders()
     });
     
-    console.log('API 응답 상태:', response.status);
+    console.log('API 응답 상태 코드:', response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -58,10 +85,11 @@ export async function fetchRecords(): Promise<Record<string, unknown>[]> {
     
     const data = await response.json();
     console.log('API 응답 데이터:', data);
+    console.log('=== SM 이력 조회 API 호출 완료 ===');
     
     return data;
   } catch (error) {
-    console.error('API 조회 오류:', error);
+    console.error('=== SM 이력 조회 API 오류 ===', error);
     return [];
   }
 }
@@ -112,7 +140,7 @@ export async function addRecord(record: SMRecord): Promise<Record<string, unknow
 
 // 레코드 삭제 함수
 export async function deleteRecord(id: string): Promise<boolean> {
-  // 환경 변수가 설정되지 않았으면 성공으로 처리
+  // 환경 변수가 설정되지 않았으면 true 반환 (로컬에서만 삭제)
   if (!isSupabaseConfigured()) {
     console.warn('Supabase 환경 변수가 설정되지 않았습니다. 로컬 스토리지에서만 삭제됩니다.');
     return true;

@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { SMRecordInput, TaskCategory } from '@/types';
 import { useSM } from '@/context/SMContext';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 
-// 입력 필드용 공통 스타일
-const inputStyle = "w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black font-medium text-sm";
-const readOnlyInputStyle = "w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-100 text-black font-medium text-sm";
-const textareaStyle = "w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black font-medium text-sm";
-const selectStyle = "w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black font-medium text-sm";
+// 입력 필드용 공통 스타일 (크기 절반으로 축소)
+const inputStyle = "w-full px-1 py-0.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black font-medium text-xs";
+const readOnlyInputStyle = "w-full px-1 py-0.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-100 text-black font-medium text-xs";
+const textareaStyle = "w-full px-1 py-0.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black font-medium text-xs";
+const selectStyle = "w-full px-1 py-0.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black font-medium text-xs";
 
 // 카테고리 옵션
 const categoryOptions: TaskCategory[] = ["대시보드", "PLAN", "기타"];
@@ -19,8 +19,6 @@ export default function SMForm() {
   const { addRecord, records, isLoading, error } = useSM();
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<SMRecordInput>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentYear, setCurrentYear] = useState('');
-  const [currentMonth, setCurrentMonth] = useState('');
   const [today, setToday] = useState('');
   const [nextTaskNumbers, setNextTaskNumbers] = useState<Record<string, number>>({
     '대시보드': 1,
@@ -33,6 +31,11 @@ export default function SMForm() {
   // 접수일자와 카테고리 watch
   const receiptDate = watch('receiptDate');
   const category = watch('category');
+  
+  // 소요시간 필드들 watch (실시간 계산용)
+  const workTimeDays = watch('workTimeDays');
+  const workTimeHours = watch('workTimeHours');
+  const workTimeMinutes = watch('workTimeMinutes');
 
   // 기타 카테고리 선택 시 커스텀 카테고리 입력 필드 표시
   useEffect(() => {
@@ -47,113 +50,92 @@ export default function SMForm() {
   // 컴포넌트 마운트 시 기본값 설정
   useEffect(() => {
     // 클라이언트 측에서만 날짜 계산
-    setCurrentYear(new Date().getFullYear().toString());
-    setCurrentMonth((new Date().getMonth() + 1).toString().padStart(2, '0'));
     setToday(format(new Date(), 'yyyy-MM-dd'));
   }, []);
 
-  // 카테고리별 다음 Task No 계산
-  useEffect(() => {
-    if (records.length === 0) {
-      // 초기 상태 유지
-      return;
-    }
-
-    // 각 카테고리별 최대 번호 찾기
-    const maxNumbers: Record<string, number> = {
-      '대시보드': 0,
-      'PLAN': 0,
-      '기타': 0
-    };
-
-    // 기존 records에서 각 카테고리별 최대 번호 찾기
-    records.forEach(record => {
-      const numericPart = parseInt(record.taskNo, 10);
-      if (!isNaN(numericPart)) {
-        // 카테고리가 기존에 있으면 해당 카테고리의 최대값 업데이트
-        if (record.category in maxNumbers) {
-          maxNumbers[record.category] = Math.max(maxNumbers[record.category], numericPart);
-        } else {
-          // 새로운 카테고리라면 해당 카테고리에 대한 최대값 초기화
-          maxNumbers[record.category] = numericPart;
-        }
-      }
-    });
-
-    // 각 카테고리별 다음 번호 계산 (최대값 + 1)
-    const nextNumbers: Record<string, number> = {};
-    Object.keys(maxNumbers).forEach(category => {
-      nextNumbers[category] = maxNumbers[category] + 1;
-    });
-
-    // 기타 카테고리들에 대한 기본값도 설정
-    setNextTaskNumbers(prev => ({
-      ...prev,
-      ...nextNumbers
-    }));
-  }, [records]);
-
-  // 폼 초기값 설정
-  useEffect(() => {
-    if (currentYear && currentMonth && today) {
-      setValue('year', currentYear);
-      setValue('month', currentMonth);
-      setValue('receiptDate', today);
-      setValue('startDate', today);
-      setValue('deployDate', today);
-      setValue('smManager', '위승빈');
-      setValue('category', '대시보드'); // 기본 카테고리 설정
-      
-      // 현재 선택된 카테고리에 맞는 번호 설정
-      if (category && nextTaskNumbers[category]) {
-        setValue('taskNo', nextTaskNumbers[category].toString());
-      } else {
-        setValue('taskNo', nextTaskNumbers['대시보드'].toString());
-      }
-    }
-  }, [setValue, currentYear, currentMonth, today, nextTaskNumbers, category]);
-
-  // 카테고리 변경 시 해당 카테고리의 다음 번호로 Task No 업데이트
-  useEffect(() => {
-    if (category && nextTaskNumbers[category]) {
-      setValue('taskNo', nextTaskNumbers[category].toString());
-    } else if (category === '기타' && customCategory) {
-      // 기타 카테고리의 경우 커스텀 이름에 따라 다른 번호 부여
-      if (nextTaskNumbers[customCategory]) {
-        setValue('taskNo', nextTaskNumbers[customCategory].toString());
-      } else {
-        setValue('taskNo', '1'); // 새로운 커스텀 카테고리는 1부터 시작
-      }
-    }
-  }, [category, customCategory, nextTaskNumbers, setValue]);
-
-  // 접수일자 변경 시 연도, 월, 착수일자, 반영일자 자동 업데이트
+  // 접수일자 변경 시 연도, 대상월, 착수일자, 반영(예상)일자, 반영(종료) 일자 자동 설정
   useEffect(() => {
     if (receiptDate) {
       try {
-        const dateObj = parse(receiptDate, 'yyyy-MM-dd', new Date());
-        const year = format(dateObj, 'yyyy');
-        const month = format(dateObj, 'MM');
+        const date = new Date(receiptDate);
+        const year = date.getFullYear().toString();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
         
         setValue('year', year);
-        setValue('month', month);
-        setValue('startDate', receiptDate); // 착수일자도 접수일자와 같게 설정
-        setValue('deployDate', receiptDate); // 반영일자도 접수일자와 같게 설정
+        setValue('targetMonth', month);
+        setValue('startDate', receiptDate);
+        setValue('expectedDeployDate', receiptDate);
+        setValue('actualDeployDate', receiptDate);
       } catch (error) {
-        console.error('날짜 파싱 중 오류:', error);
+        console.error('날짜 파싱 오류:', error);
       }
     }
   }, [receiptDate, setValue]);
 
+  // 기존 레코드에서 다음 Task No 계산
+  useEffect(() => {
+    const taskNumbers: Record<string, number> = {
+      '대시보드': 1,
+      'PLAN': 1,
+      '기타': 1
+    };
+
+    records.forEach(record => {
+      const taskNoNum = parseInt(record.taskNo, 10);
+      if (!isNaN(taskNoNum)) {
+        if (taskNumbers[record.category] <= taskNoNum) {
+          taskNumbers[record.category] = taskNoNum + 1;
+        }
+      }
+    });
+
+    setNextTaskNumbers(taskNumbers);
+  }, [records]);
+
+  // 카테고리 변경 시 Task No 자동 설정
+  useEffect(() => {
+    if (category && nextTaskNumbers[category]) {
+      setValue('taskNo', nextTaskNumbers[category].toString());
+    }
+  }, [category, nextTaskNumbers, setValue]);
+
+  // 소요시간 변경 시 최종합(MM) 자동 계산
+  useEffect(() => {
+    const days = parseFloat(workTimeDays) || 0;
+    const hours = parseFloat(workTimeHours) || 0;
+    const minutes = parseFloat(workTimeMinutes) || 0;
+    
+    // 최종합 = 일/21 + 시/21/8 + 분/21/8/60
+    const totalMM = days / 21 + hours / (21 * 8) + minutes / (21 * 8 * 60);
+    
+    // 소수점 3자리까지 반올림
+    const roundedTotalMM = Math.round(totalMM * 1000) / 1000;
+    
+    setValue('totalMM', roundedTotalMM.toString());
+  }, [workTimeDays, workTimeHours, workTimeMinutes, setValue]);
+
+  // 폼 초기값 설정
+  useEffect(() => {
+    if (today) {
+      setValue('receiptDate', today);
+      setValue('startDate', today);
+      setValue('expectedDeployDate', today);
+      setValue('smManager', '위승빈');
+      setValue('processType', 'SM운영');
+    }
+  }, [today, setValue]);
+
   const onSubmit = async (data: SMRecordInput) => {
-    setIsSubmitting(true);
     try {
+      setIsSubmitting(true);
+      
       // 기타 카테고리인 경우 customCategory 사용
       const finalCategory = data.category === '기타' ? customCategory : data.category;
       
       const finalData = {
         ...data,
-        category: finalCategory
+        category: finalCategory,
+        processType: 'SM운영' // 처리구분 기본값
       };
       
       // 비동기 함수로 변경됨
@@ -172,17 +154,35 @@ export default function SMForm() {
         category: data.category,
         taskNo: nextNumber.toString(),
         year: data.year,
-        month: data.month,
+        targetMonth: data.targetMonth,
         receiptDate: data.receiptDate,
         requestPath: '',
+        workBasisNumber: '',
         requestTeam: '',
+        requestOrgType: '',
         requester: '',
+        lgUplusTeamName: '',
+        systemPart: '',
+        targetSystemName: '',
+        slaSmActivity: '',
+        slaSmActivityDetail: '',
+        processType: 'SM운영',
         requestContent: '',
         processContent: '',
         note: '',
         smManager: '위승빈',
         startDate: data.receiptDate,
-        deployDate: data.receiptDate,
+        expectedDeployDate: data.receiptDate,
+        deployCompleted: '',
+        actualDeployDate: '',
+        workTimeDays: '',
+        workTimeHours: '',
+        workTimeMinutes: '',
+        totalMM: '',
+        monthlyActualBillingMM: '',
+        errorFixRequired: '',
+        workReviewTarget: '',
+        workReviewWeek: ''
       });
       
       alert('SM 이력이 성공적으로 등록되었습니다.');
@@ -209,14 +209,14 @@ export default function SMForm() {
   // 오류가 있을 때 표시
   if (error) {
     return (
-      <div className="bg-white p-4 rounded-lg shadow-md max-w-5xl mx-auto">
-        <div className="flex flex-col items-center justify-center p-4">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <div className="flex flex-col items-center justify-center p-8">
+          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <p className="text-red-600 font-medium text-base mb-1">데이터베이스 연결 오류</p>
+          <p className="text-red-600 font-medium text-lg mb-2">데이터베이스 연결 오류</p>
           <p className="text-gray-600 text-sm text-center">{error}</p>
           <p className="text-gray-600 text-xs mt-2 text-center">
             .env.local 파일에 올바른 Supabase 연결 정보가 설정되어 있는지 확인하세요.
@@ -226,29 +226,22 @@ export default function SMForm() {
     );
   }
 
-  // 카테고리와 Task No 결합하여 표시
-  const getFullTaskNo = () => {
-    const displayCategory = category === '기타' ? customCategory : category;
-    const taskNo = category ? nextTaskNumbers[category === '기타' ? customCategory : category] : '';
-    return displayCategory && taskNo ? `${displayCategory}-${taskNo}` : '';
-  };
-
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md max-w-5xl mx-auto">
-      <h2 className="text-xl font-bold mb-3 text-gray-800">SM 이력 등록</h2>
+    <div className="bg-white p-3 rounded-lg shadow-md max-w-6xl mx-auto">
+      <h2 className="text-lg font-bold text-gray-800 mb-3">SM 이력 등록</h2>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-        {/* 카테고리 및 Task No 섹션 */}
-        <div className="bg-gray-50 p-2 rounded-md mb-2">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">기본 정보</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-            {/* 카테고리 선택 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">카테고리</label>
+        {/* 기본 정보 섹션 */}
+        <div className="border-b border-gray-200 pb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">기본 정보</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+                          <div>
+                <label className="block text-xs font-medium text-red-600 mb-0.5">카테고리 *</label>
               <select
-                {...register('category', { required: '카테고리는 필수입니다' })}
+                {...register('category', { required: '카테고리를 선택해주세요' })}
                 className={selectStyle}
               >
+                <option value="">카테고리 선택</option>
                 {categoryOptions.map(option => (
                   <option key={option} value={option}>{option}</option>
                 ))}
@@ -256,201 +249,392 @@ export default function SMForm() {
               {errors.category && <p className="text-red-500 text-xs mt-1">{errors.category.message}</p>}
             </div>
 
-            {/* 기타 카테고리 입력 필드 */}
             {showCustomCategory && (
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">커스텀 카테고리</label>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">커스텀 카테고리 *</label>
                 <input
                   type="text"
                   value={customCategory}
                   onChange={(e) => setCustomCategory(e.target.value)}
                   className={inputStyle}
-                  placeholder="카테고리 이름 입력"
-                  required
+                  placeholder="카테고리명 입력"
                 />
               </div>
             )}
 
-            {/* Task No 표시 */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">번호</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">TASK NO *</label>
               <input
-                type="text"
-                {...register('taskNo', { required: '번호는 필수입니다' })}
+                {...register('taskNo', { required: 'Task No를 입력해주세요' })}
+                className={readOnlyInputStyle}
+                readOnly
+              />
+              {errors.taskNo && <p className="text-red-500 text-xs mt-1">{errors.taskNo.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">연도</label>
+              <input
+                {...register('year')}
                 className={readOnlyInputStyle}
                 readOnly
               />
             </div>
 
-            {/* 전체 Task No 미리보기 */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">전체 Task No</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">대상 월</label>
               <input
-                type="text"
-                value={getFullTaskNo()}
+                {...register('targetMonth')}
                 className={readOnlyInputStyle}
                 readOnly
               />
             </div>
-          </div>
-        </div>
 
-        {/* 날짜 정보 섹션 */}
-        <div className="bg-gray-50 p-2 rounded-md mb-2">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">날짜 정보</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-            {/* 접수일자 */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">접수일자</label>
+              <label className="block text-sm font-medium text-red-600 mb-1">접수일자 *</label>
               <input
+                {...register('receiptDate', { required: '접수일자를 선택해주세요' })}
                 type="date"
-                {...register('receiptDate', { required: '접수일자는 필수입니다' })}
                 className={inputStyle}
               />
               {errors.receiptDate && <p className="text-red-500 text-xs mt-1">{errors.receiptDate.message}</p>}
             </div>
 
-            {/* 연도 */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">연도</label>
+              <label className="block text-sm font-medium text-red-600 mb-1">요청경로</label>
               <input
-                type="text"
-                {...register('year', { required: '연도는 필수입니다' })}
-                className={readOnlyInputStyle}
-                readOnly
-              />
-            </div>
-
-            {/* 월 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">월</label>
-              <input
-                type="text"
-                {...register('month', { required: '월은 필수입니다' })}
-                className={readOnlyInputStyle}
-                readOnly
-              />
-            </div>
-
-            {/* 착수일자 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">착수일자</label>
-              <input
-                type="date"
-                {...register('startDate')}
-                className={inputStyle}
-                readOnly
-              />
-            </div>
-
-            {/* 반영일자 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">반영일자</label>
-              <input
-                type="date"
-                {...register('deployDate')}
-                className={inputStyle}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 요청 정보 섹션 */}
-        <div className="bg-gray-50 p-2 rounded-md mb-2">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">요청 정보</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-            {/* 요청경로 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">요청경로</label>
-              <input
-                type="text"
                 {...register('requestPath')}
                 className={inputStyle}
-                placeholder="예: 이메일, 전화, 회의 등"
+                placeholder="요청경로 입력"
               />
             </div>
 
-            {/* 요청팀 */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">요청팀</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">작업근거 번호</label>
               <input
-                type="text"
-                {...register('requestTeam')}
+                {...register('workBasisNumber')}
                 className={inputStyle}
-                placeholder="요청한 팀명"
-              />
-            </div>
-
-            {/* 요청자 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">요청자</label>
-              <input
-                type="text"
-                {...register('requester')}
-                className={inputStyle}
-                placeholder="요청자명"
-              />
-            </div>
-
-            {/* SM 담당자 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">SM 담당자</label>
-              <input
-                type="text"
-                {...register('smManager')}
-                className={inputStyle}
-                placeholder="담당자명"
-                defaultValue="위승빈"
+                placeholder="작업근거 번호 입력"
               />
             </div>
           </div>
         </div>
 
-        {/* 내용 섹션 */}
-        <div className="bg-gray-50 p-2 rounded-md mb-2">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">내용</h3>
-          <div className="space-y-2">
-            {/* 요청내용 */}
+        {/* 요청자 정보 섹션 */}
+        <div className="border-b border-gray-200 pb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">요청자 정보</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">요청내용</label>
+              <label className="block text-sm font-medium text-red-600 mb-1">요청팀 *</label>
+              <input
+                {...register('requestTeam', { required: '요청팀을 입력해주세요' })}
+                className={inputStyle}
+                defaultValue="경영지원시스템팀"
+                placeholder="요청팀 입력"
+              />
+              {errors.requestTeam && <p className="text-red-500 text-xs mt-1">{errors.requestTeam.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">요청조직구분</label>
+              <input
+                {...register('requestOrgType')}
+                className={inputStyle}
+                defaultValue="SM운영조직(LGCNS/협력업체)"
+                placeholder="요청조직구분 입력"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-red-600 mb-1">요청자 *</label>
+              <input
+                {...register('requester', { required: '요청자를 입력해주세요' })}
+                className={inputStyle}
+                defaultValue="한상명"
+                placeholder="요청자 입력"
+              />
+              {errors.requester && <p className="text-red-500 text-xs mt-1">{errors.requester.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">LG U+팀명</label>
+              <input
+                {...register('lgUplusTeamName')}
+                className={inputStyle}
+                defaultValue="경영분석팀"
+                placeholder="LG U+팀명 입력"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 시스템 정보 섹션 */}
+        <div className="border-b border-gray-200 pb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">시스템 정보</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">시스템(파트)</label>
+              <input
+                {...register('systemPart')}
+                className={inputStyle}
+                defaultValue="경영관리시스템"
+                placeholder="시스템(파트) 입력"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">대상 시스템명</label>
+              <input
+                {...register('targetSystemName')}
+                className={inputStyle}
+                defaultValue="경영관리 시스템(USIS)"
+                placeholder="대상 시스템명 입력"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">SLA SM Activity</label>
+              <input
+                {...register('slaSmActivity')}
+                className={inputStyle}
+                placeholder="SLA SM Activity 입력"
+              />
+            </div>
+
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">SLA SM Activity(상세)</label>
+              <input
+                {...register('slaSmActivityDetail')}
+                className={inputStyle}
+                placeholder="SLA SM Activity 상세 입력"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">처리구분</label>
+              <input
+                {...register('processType')}
+                className={readOnlyInputStyle}
+                value="SM운영"
+                readOnly
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 작업 내용 섹션 */}
+        <div className="border-b border-gray-200 pb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">작업 내용</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-red-600 mb-1">요청 내용 *</label>
               <textarea
-                {...register('requestContent', { required: '요청내용은 필수입니다' })}
+                {...register('requestContent', { required: '요청 내용을 입력해주세요' })}
                 rows={2}
                 className={textareaStyle}
-                placeholder="요청 내용을 입력하세요"
-              ></textarea>
+                placeholder="요청 내용을 상세히 입력해주세요"
+              />
               {errors.requestContent && <p className="text-red-500 text-xs mt-1">{errors.requestContent.message}</p>}
             </div>
 
-            {/* 처리내용 */}
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">처리내용</label>
+              <label className="block text-sm font-medium text-red-600 mb-1">처리 내용</label>
               <textarea
                 {...register('processContent')}
                 rows={2}
                 className={textareaStyle}
-                placeholder="처리 내용을 입력하세요"
-              ></textarea>
+                placeholder="처리 내용을 입력해주세요"
+              />
             </div>
 
-            {/* 비고 */}
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">비고</label>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">비고</label>
               <textarea
                 {...register('note')}
-                rows={1}
+                rows={2}
                 className={textareaStyle}
-                placeholder="추가 정보가 있으면 입력하세요"
-              ></textarea>
+                placeholder="추가 사항이나 특이사항을 입력해주세요"
+              />
             </div>
           </div>
         </div>
 
-        <div className="pt-2">
+        {/* 일정 및 담당자 섹션 */}
+        <div className="border-b border-gray-200 pb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">일정 및 담당자</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">SM 담당자 *</label>
+              <input
+                {...register('smManager', { required: 'SM 담당자를 입력해주세요' })}
+                className={inputStyle}
+                placeholder="SM 담당자 입력"
+              />
+              {errors.smManager && <p className="text-red-500 text-xs mt-1">{errors.smManager.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">착수 일자</label>
+              <input
+                {...register('startDate')}
+                type="date"
+                className={readOnlyInputStyle}
+                readOnly
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">반영(예상)일자</label>
+              <input
+                {...register('expectedDeployDate')}
+                type="date"
+                className={readOnlyInputStyle}
+                readOnly
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">반영(종료) 여부</label>
+              <select
+                {...register('deployCompleted')}
+                className={selectStyle}
+                defaultValue="반영(처리)완료"
+              >
+                <option value="">선택</option>
+                <option value="반영(처리)완료">반영(처리)완료</option>
+                <option value="진행중">진행중</option>
+                <option value="대기">대기</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">반영(종료) 일자</label>
+              <input
+                {...register('actualDeployDate')}
+                type="date"
+                className={readOnlyInputStyle}
+                readOnly
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 소요시간 및 MM 섹션 */}
+        <div className="border-b border-gray-200 pb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">소요시간 및 MM</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">소요시간 일(day)</label>
+              <input
+                {...register('workTimeDays')}
+                type="number"
+                min="0"
+                className={inputStyle}
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-red-600 mb-1">소요시간 시(hour)</label>
+              <input
+                {...register('workTimeHours')}
+                type="number"
+                min="0"
+                max="23"
+                className={inputStyle}
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-red-600 mb-1">소요시간 분(min)</label>
+              <input
+                {...register('workTimeMinutes')}
+                type="number"
+                min="0"
+                max="59"
+                className={inputStyle}
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">최종합(MM)</label>
+              <input
+                {...register('totalMM')}
+                type="number"
+                step="0.001"
+                min="0"
+                className={readOnlyInputStyle}
+                placeholder="0.000"
+                readOnly
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">월별 실제 청구 MM</label>
+              <input
+                {...register('monthlyActualBillingMM')}
+                type="number"
+                step="0.01"
+                min="0"
+                className={inputStyle}
+                placeholder="0.00"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">오류 수정 여부</label>
+              <select
+                {...register('errorFixRequired')}
+                className={selectStyle}
+              >
+                <option value="">선택</option>
+                <option value="예">예</option>
+                <option value="아니오">아니오</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* 작업리뷰 섹션 */}
+        <div className="pb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">작업리뷰</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">작업리뷰 보고대상</label>
+              <input
+                {...register('workReviewTarget')}
+                className={inputStyle}
+                defaultValue="비대상"
+                placeholder="작업리뷰 보고대상 입력"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">작업리뷰 주차</label>
+              <input
+                {...register('workReviewWeek')}
+                className={inputStyle}
+                placeholder="작업리뷰 주차 입력 (예: 2024-01주차)"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 제출 버튼 */}
+        <div className="flex justify-end space-x-2 pt-3 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={() => reset()}
+            className="px-3 py-1 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 text-xs"
+          >
+            초기화
+          </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
+            className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
           >
             {isSubmitting ? '등록 중...' : 'SM 이력 등록'}
           </button>
