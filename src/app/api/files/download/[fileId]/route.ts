@@ -16,10 +16,10 @@ const BUCKET_NAME = 'ppt';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
-    const fileId = params.fileId;
+    const { fileId } = await params;
     
     if (!fileId) {
       return NextResponse.json({ error: '파일 ID가 제공되지 않았습니다.' }, { status: 400 });
