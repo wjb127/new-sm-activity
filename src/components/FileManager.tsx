@@ -57,26 +57,8 @@ export default function FileManager() {
         
         console.log('파일 목록 로드 시작...');
         
-        // 먼저 버킷 접근 권한 테스트
-        console.log('버킷 접근 권한 테스트 중...');
-        const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
-        console.log('버킷 목록:', buckets);
-        
-        if (bucketError) {
-          console.error('버킷 접근 오류:', bucketError);
-          throw new Error(`버킷 접근 실패: ${bucketError.message}`);
-        }
-
-        // ppt 버킷이 존재하는지 확인
-        const pptBucket = buckets?.find((bucket: any) => bucket.name === 'ppt');
-        if (!pptBucket) {
-          throw new Error('ppt 버킷을 찾을 수 없습니다. Supabase 대시보드에서 버킷을 확인하세요.');
-        }
-        
-        console.log('ppt 버킷 정보:', pptBucket);
-        
-        // Supabase Storage에서 파일 목록 가져오기
-        console.log('파일 목록 가져오기 시작...');
+        // 바로 ppt 버킷의 파일 목록 가져오기 (listBuckets 권한 문제 우회)
+        console.log('ppt 버킷 파일 목록 가져오기 시작...');
         const { data: files, error } = await supabase.storage
           .from('ppt')
           .list('', {
@@ -88,6 +70,13 @@ export default function FileManager() {
 
         if (error) {
           console.error('파일 목록 로드 에러:', error);
+          // 빈 배열로 처리 (버킷이 비어있을 수도 있음)
+          if (error.message.includes('not found') || error.message.includes('does not exist')) {
+            console.log('버킷이 비어있거나 접근 권한이 없습니다. 빈 목록으로 시작합니다.');
+            setFiles([]);
+            setIsLoading(false);
+            return;
+          }
           throw new Error(`파일 목록 로드 실패: ${error.message}`);
         }
 
@@ -96,21 +85,19 @@ export default function FileManager() {
           (files || []).map(async (file: any) => {
             console.log('파일 처리 중:', file);
             
-            // 다운로드 URL 생성
-            const { data: urlData, error: urlError } = await supabase.storage
+            // 다운로드 URL 생성 (Public 버킷이므로 createSignedUrl 대신 getPublicUrl 사용)
+            const { data: urlData } = supabase.storage
               .from('ppt')
-              .createSignedUrl(file.name, 3600); // 1시간 유효
+              .getPublicUrl(file.name);
 
-            if (urlError) {
-              console.warn('URL 생성 실패:', urlError);
-            }
+            console.log('Public URL 생성:', urlData);
 
             return {
               id: file.name,
               name: file.name,
               size: file.metadata?.size || 0,
               type: file.metadata?.mimetype || 'application/octet-stream',
-              url: urlData?.signedUrl || '',
+              url: urlData.publicUrl,
               uploadedAt: file.created_at || new Date().toISOString(),
             };
           })
@@ -163,9 +150,6 @@ export default function FileManager() {
         fileType: file.type
       });
 
-      // Supabase 클라이언트 상태 확인
-      console.log('Supabase 클라이언트:', supabase);
-
       // 파일명에 타임스탬프 추가하여 중복 방지
       const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
@@ -186,24 +170,20 @@ export default function FileManager() {
         throw new Error(`Supabase 업로드 실패: ${error.message}`);
       }
 
-      // 업로드된 파일의 다운로드 URL 생성
-      console.log('다운로드 URL 생성 중...');
-      const { data: urlData, error: urlError } = await supabase.storage
+      // Public 버킷이므로 getPublicUrl 사용
+      console.log('Public URL 생성 중...');
+      const { data: urlData } = supabase.storage
         .from('ppt')
-        .createSignedUrl(fileName, 3600);
+        .getPublicUrl(fileName);
 
-      console.log('URL 생성 결과:', { urlData, urlError });
-
-      if (urlError) {
-        console.warn('URL 생성 실패:', urlError);
-      }
+      console.log('URL 생성 결과:', urlData);
 
       const newFile: FileInfo = {
         id: fileName,
         name: file.name,
         size: file.size,
         type: file.type,
-        url: urlData?.signedUrl || '',
+        url: urlData.publicUrl,
         uploadedAt: new Date().toISOString(),
       };
 
