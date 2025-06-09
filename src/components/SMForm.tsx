@@ -9,7 +9,6 @@ import { format } from 'date-fns';
 // 입력 필드용 공통 스타일 (크기 절반으로 축소)
 const inputStyle = "w-full px-1 py-0.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black font-medium text-xs";
 const readOnlyInputStyle = "w-full px-1 py-0.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-gray-100 text-black font-medium text-xs";
-const textareaStyle = "w-full px-1 py-0.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black font-medium text-xs";
 const selectStyle = "w-full px-1 py-0.5 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-black font-medium text-xs";
 
 // 카테고리 옵션
@@ -405,33 +404,84 @@ export default function SMForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
               <label className="block text-sm font-medium text-red-600 mb-1">요청 내용 *</label>
-              <textarea
+              <input
                 {...register('requestContent', { required: '요청 내용을 입력해주세요' })}
-                rows={2}
-                className={textareaStyle}
-                placeholder="요청 내용을 상세히 입력해주세요"
+                className={inputStyle}
+                placeholder="요청 내용을 입력해주세요"
+                list="requestContentOptions"
               />
+              <datalist id="requestContentOptions">
+                <option value="시스템 오류 수정 요청" />
+                <option value="데이터 수정 요청" />
+                <option value="화면 개선 요청" />
+                <option value="신규 기능 개발 요청" />
+                <option value="배치 프로그램 수정 요청" />
+                <option value="권한 설정 요청" />
+                <option value="인터페이스 오류 수정" />
+                <option value="성능 개선 요청" />
+                <option value="보고서 수정 요청" />
+                <option value="메뉴 추가/수정 요청" />
+                <option value="코드 관리 요청" />
+                <option value="DB 스키마 변경 요청" />
+                <option value="시스템 설정 변경 요청" />
+                <option value="사용자 매뉴얼 업데이트 요청" />
+                <option value="테스트 환경 구성 요청" />
+              </datalist>
               {errors.requestContent && <p className="text-red-500 text-xs mt-1">{errors.requestContent.message}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-red-600 mb-1">처리 내용</label>
-              <textarea
+              <input
                 {...register('processContent')}
-                rows={2}
-                className={textareaStyle}
+                className={inputStyle}
                 placeholder="처리 내용을 입력해주세요"
+                list="processContentOptions"
               />
+              <datalist id="processContentOptions">
+                <option value="시스템 오류 수정 완료" />
+                <option value="데이터 수정 완료" />
+                <option value="화면 개선 완료" />
+                <option value="신규 기능 개발 완료" />
+                <option value="배치 프로그램 수정 완료" />
+                <option value="권한 설정 완료" />
+                <option value="인터페이스 오류 수정 완료" />
+                <option value="성능 개선 완료" />
+                <option value="보고서 수정 완료" />
+                <option value="메뉴 추가/수정 완료" />
+                <option value="코드 관리 완료" />
+                <option value="DB 스키마 변경 완료" />
+                <option value="시스템 설정 변경 완료" />
+                <option value="사용자 매뉴얼 업데이트 완료" />
+                <option value="테스트 환경 구성 완료" />
+                <option value="검토 중" />
+                <option value="개발 진행 중" />
+                <option value="테스트 진행 중" />
+                <option value="승인 대기 중" />
+                <option value="배포 예정" />
+              </datalist>
             </div>
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">비고</label>
-              <textarea
+              <input
                 {...register('note')}
-                rows={2}
-                className={textareaStyle}
+                className={inputStyle}
                 placeholder="추가 사항이나 특이사항을 입력해주세요"
+                list="noteOptions"
               />
+              <datalist id="noteOptions">
+                <option value="긴급 처리 요청" />
+                <option value="정기 점검 시 처리" />
+                <option value="사용자 교육 필요" />
+                <option value="추가 테스트 필요" />
+                <option value="관련 부서 협의 필요" />
+                <option value="보안 검토 필요" />
+                <option value="성능 테스트 필요" />
+                <option value="문서화 필요" />
+                <option value="백업 후 처리" />
+                <option value="야간 작업 예정" />
+              </datalist>
             </div>
           </div>
         </div>

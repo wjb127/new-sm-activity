@@ -151,15 +151,78 @@ function EditModal({ record, isOpen, onClose, onSave }: {
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-red-600 mb-1">요청 내용</label>
-                <textarea {...register('requestContent')} rows={3} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input 
+                  {...register('requestContent')} 
+                  className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" 
+                  list="editRequestContentOptions"
+                />
+                <datalist id="editRequestContentOptions">
+                  <option value="시스템 오류 수정 요청" />
+                  <option value="데이터 수정 요청" />
+                  <option value="화면 개선 요청" />
+                  <option value="신규 기능 개발 요청" />
+                  <option value="배치 프로그램 수정 요청" />
+                  <option value="권한 설정 요청" />
+                  <option value="인터페이스 오류 수정" />
+                  <option value="성능 개선 요청" />
+                  <option value="보고서 수정 요청" />
+                  <option value="메뉴 추가/수정 요청" />
+                  <option value="코드 관리 요청" />
+                  <option value="DB 스키마 변경 요청" />
+                  <option value="시스템 설정 변경 요청" />
+                  <option value="사용자 매뉴얼 업데이트 요청" />
+                  <option value="테스트 환경 구성 요청" />
+                </datalist>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-red-600 mb-1">처리 내용</label>
-                <textarea {...register('processContent')} rows={3} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input 
+                  {...register('processContent')} 
+                  className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" 
+                  list="editProcessContentOptions"
+                />
+                <datalist id="editProcessContentOptions">
+                  <option value="시스템 오류 수정 완료" />
+                  <option value="데이터 수정 완료" />
+                  <option value="화면 개선 완료" />
+                  <option value="신규 기능 개발 완료" />
+                  <option value="배치 프로그램 수정 완료" />
+                  <option value="권한 설정 완료" />
+                  <option value="인터페이스 오류 수정 완료" />
+                  <option value="성능 개선 완료" />
+                  <option value="보고서 수정 완료" />
+                  <option value="메뉴 추가/수정 완료" />
+                  <option value="코드 관리 완료" />
+                  <option value="DB 스키마 변경 완료" />
+                  <option value="시스템 설정 변경 완료" />
+                  <option value="사용자 매뉴얼 업데이트 완료" />
+                  <option value="테스트 환경 구성 완료" />
+                  <option value="검토 중" />
+                  <option value="개발 진행 중" />
+                  <option value="테스트 진행 중" />
+                  <option value="승인 대기 중" />
+                  <option value="배포 예정" />
+                </datalist>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">비고</label>
-                <textarea {...register('note')} rows={2} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input 
+                  {...register('note')} 
+                  className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" 
+                  list="editNoteOptions"
+                />
+                <datalist id="editNoteOptions">
+                  <option value="긴급 처리 요청" />
+                  <option value="정기 점검 시 처리" />
+                  <option value="사용자 교육 필요" />
+                  <option value="추가 테스트 필요" />
+                  <option value="관련 부서 협의 필요" />
+                  <option value="보안 검토 필요" />
+                  <option value="성능 테스트 필요" />
+                  <option value="문서화 필요" />
+                  <option value="백업 후 처리" />
+                  <option value="야간 작업 예정" />
+                </datalist>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">SM 담당자</label>
