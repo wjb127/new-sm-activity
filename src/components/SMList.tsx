@@ -251,7 +251,7 @@ export default function SMList() {
   const { records, deleteRecord, updateRecord, isLoading, error } = useSM();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<keyof SMRecord>('receiptDate');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [editingRecord, setEditingRecord] = useState<SMRecord | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -274,6 +274,26 @@ export default function SMList() {
       const fieldA = a[sortField] || '';
       const fieldB = b[sortField] || '';
       
+      // 날짜 필드들은 날짜 비교로 처리
+      if (sortField === 'receiptDate' || sortField === 'startDate' || 
+          sortField === 'expectedDeployDate' || sortField === 'actualDeployDate' || 
+          sortField === 'createdAt') {
+        const dateA = new Date(fieldA);
+        const dateB = new Date(fieldB);
+        
+        // 유효하지 않은 날짜는 맨 뒤로
+        if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+        if (isNaN(dateA.getTime())) return 1;
+        if (isNaN(dateB.getTime())) return -1;
+        
+        if (sortDirection === 'asc') {
+          return dateA.getTime() - dateB.getTime();
+        } else {
+          return dateB.getTime() - dateA.getTime();
+        }
+      }
+      
+      // 일반 문자열 비교
       if (sortDirection === 'asc') {
         return fieldA.localeCompare(fieldB);
       } else {
@@ -296,9 +316,22 @@ export default function SMList() {
     if (window.confirm('정말로 이 SM 이력을 삭제하시겠습니까?')) {
       try {
         await deleteRecord(id);
+        alert('SM 이력이 성공적으로 삭제되었습니다.');
       } catch (error) {
         console.error('삭제 중 오류가 발생했습니다:', error);
-        alert('삭제 중 오류가 발생했습니다.');
+        
+        let errorMessage = 'SM 이력 삭제에 실패했습니다.';
+        if (error instanceof Error) {
+          if (error.message.includes('Supabase')) {
+            errorMessage = `데이터베이스 오류: ${error.message}`;
+          } else if (error.message.includes('네트워크') || error.message.includes('fetch')) {
+            errorMessage = '네트워크 연결을 확인하고 다시 시도해주세요.';
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
+        alert(errorMessage);
       }
     }
   };
@@ -317,7 +350,25 @@ export default function SMList() {
 
   // 수정 저장
   const handleSaveEdit = async (id: string, data: SMRecordInput) => {
-    await updateRecord(id, data);
+    try {
+      await updateRecord(id, data);
+      alert('SM 이력이 성공적으로 수정되었습니다.');
+    } catch (error) {
+      console.error('수정 중 오류가 발생했습니다:', error);
+      
+      let errorMessage = 'SM 이력 수정에 실패했습니다.';
+      if (error instanceof Error) {
+        if (error.message.includes('Supabase')) {
+          errorMessage = `데이터베이스 오류: ${error.message}`;
+        } else if (error.message.includes('네트워크') || error.message.includes('fetch')) {
+          errorMessage = '네트워크 연결을 확인하고 다시 시도해주세요.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(errorMessage);
+    }
   };
 
   // 카테고리와 Task No 결합
@@ -405,7 +456,8 @@ export default function SMList() {
       <div className="bg-white p-4 rounded-lg shadow-md max-w-full mx-auto">
         <div className="flex flex-col items-center justify-center p-4">
           <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-2"></div>
-          <p className="text-gray-600 font-medium text-sm">데이터를 불러오는 중입니다...</p>
+          <p className="text-gray-600 font-medium text-sm">Supabase에서 데이터를 불러오는 중입니다...</p>
+          <p className="text-gray-500 text-xs mt-1">잠시만 기다려주세요.</p>
         </div>
       </div>
     );
@@ -415,17 +467,38 @@ export default function SMList() {
   if (error) {
     return (
       <div className="bg-white p-4 rounded-lg shadow-md max-w-full mx-auto">
-        <div className="flex flex-col items-center justify-center p-4">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="flex flex-col items-center justify-center p-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <p className="text-red-600 font-medium text-base mb-1">데이터베이스 연결 오류</p>
-          <p className="text-gray-600 text-sm text-center">{error}</p>
-          <p className="text-gray-600 text-xs mt-2 text-center">
-            .env.local 파일에 올바른 Supabase 연결 정보가 설정되어 있는지 확인하세요.
-          </p>
+          <p className="text-red-600 font-bold text-base mb-2">Supabase 연결 실패</p>
+          <p className="text-gray-700 text-sm text-center mb-4 max-w-lg">{error}</p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-lg">
+            <p className="text-yellow-800 text-xs font-medium mb-2">해결 방법:</p>
+            <ul className="text-yellow-700 text-xs space-y-1">
+              <li>• 인터넷 연결 상태를 확인하세요</li>
+              <li>• .env.local 파일의 Supabase 설정을 확인하세요</li>
+              <li>• Supabase 프로젝트가 활성화되어 있는지 확인하세요</li>
+              <li>• 페이지를 새로고침해보세요</li>
+              <li>• 문제가 지속되면 관리자에게 문의하세요</li>
+            </ul>
+          </div>
+          <div className="flex space-x-2 mt-4">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              페이지 새로고침
+            </button>
+            <button 
+              onClick={() => window.open('https://supabase.com/dashboard', '_blank')} 
+              className="px-4 py-2 bg-gray-600 text-white rounded-md text-sm font-medium hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Supabase 대시보드
+            </button>
+          </div>
         </div>
       </div>
     );

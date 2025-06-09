@@ -5,6 +5,12 @@ import { SMRecord } from '@/types';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// 환경 변수 디버깅 로그 (배포 환경에서 확인용)
+console.log('=== Supabase 환경 변수 확인 ===');
+console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'undefined');
+console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseKey ? `${supabaseKey.substring(0, 30)}...` : 'undefined');
+console.log('환경:', process.env.NODE_ENV);
+
 // API 요청에 사용할 기본 헤더
 const getHeaders = () => ({
   'apikey': supabaseKey || '',
@@ -15,7 +21,9 @@ const getHeaders = () => ({
 
 // Supabase 환경 변수가 설정되어 있는지 확인
 const isSupabaseConfigured = () => {
-  return !!(supabaseUrl && supabaseKey);
+  const configured = !!(supabaseUrl && supabaseKey);
+  console.log('Supabase 설정 상태:', configured);
+  return configured;
 };
 
 // SMRecord를 Record<string, unknown>으로 변환하는 함수

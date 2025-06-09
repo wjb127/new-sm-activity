@@ -128,67 +128,31 @@ export default function SMForm() {
   const onSubmit = async (data: SMRecordInput) => {
     try {
       setIsSubmitting(true);
+      console.log('폼 제출 데이터:', data);
       
-      // 기타 카테고리인 경우 customCategory 사용
-      const finalCategory = data.category === '기타' ? customCategory : data.category;
+      await addRecord(data);
       
-      const finalData = {
-        ...data,
-        category: finalCategory,
-        processType: 'SM운영' // 처리구분 기본값
-      };
+      // 성공 시 폼 초기화
+      reset();
+      alert('SM 이력이 성공적으로 등록되었습니다!');
       
-      // 비동기 함수로 변경됨
-      await addRecord(finalData);
-      
-      // 제출 후 해당 카테고리의 다음 번호 증가
-      setNextTaskNumbers(prev => ({
-        ...prev,
-        [finalCategory]: (prev[finalCategory] || 0) + 1
-      }));
-      
-      // 다음 번호 계산
-      const nextNumber = nextTaskNumbers[finalCategory] ? nextTaskNumbers[finalCategory] + 1 : 1;
-      
-      reset({
-        category: data.category,
-        taskNo: nextNumber.toString(),
-        year: data.year,
-        targetMonth: data.targetMonth,
-        receiptDate: data.receiptDate,
-        requestPath: '',
-        workBasisNumber: '',
-        requestTeam: '',
-        requestOrgType: '',
-        requester: '',
-        lgUplusTeamName: '',
-        systemPart: '',
-        targetSystemName: '',
-        slaSmActivity: '',
-        slaSmActivityDetail: '',
-        processType: 'SM운영',
-        requestContent: '',
-        processContent: '',
-        note: '',
-        smManager: '위승빈',
-        startDate: data.receiptDate,
-        expectedDeployDate: data.receiptDate,
-        deployCompleted: '',
-        actualDeployDate: '',
-        workTimeDays: '',
-        workTimeHours: '',
-        workTimeMinutes: '',
-        totalMM: '',
-        monthlyActualBillingMM: '',
-        errorFixRequired: '',
-        workReviewTarget: '',
-        workReviewWeek: ''
-      });
-      
-      alert('SM 이력이 성공적으로 등록되었습니다.');
     } catch (error) {
       console.error('등록 중 오류가 발생했습니다:', error);
-      alert('등록 중 오류가 발생했습니다.');
+      
+      let errorMessage = 'SM 이력 등록에 실패했습니다.';
+      if (error instanceof Error) {
+        if (error.message.includes('Supabase')) {
+          errorMessage = `데이터베이스 오류: ${error.message}`;
+        } else if (error.message.includes('환경 변수')) {
+          errorMessage = 'Supabase 설정이 올바르지 않습니다. 관리자에게 문의하세요.';
+        } else if (error.message.includes('네트워크') || error.message.includes('fetch')) {
+          errorMessage = '네트워크 연결을 확인하고 다시 시도해주세요.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -200,7 +164,8 @@ export default function SMForm() {
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex flex-col items-center justify-center p-8">
           <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600 font-medium">데이터를 불러오는 중입니다...</p>
+          <p className="text-gray-600 font-medium">Supabase 연결 중입니다...</p>
+          <p className="text-gray-500 text-sm mt-2">데이터베이스에서 정보를 불러오고 있습니다.</p>
         </div>
       </div>
     );
@@ -211,16 +176,28 @@ export default function SMForm() {
     return (
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex flex-col items-center justify-center p-8">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <p className="text-red-600 font-medium text-lg mb-2">데이터베이스 연결 오류</p>
-          <p className="text-gray-600 text-sm text-center">{error}</p>
-          <p className="text-gray-600 text-xs mt-2 text-center">
-            .env.local 파일에 올바른 Supabase 연결 정보가 설정되어 있는지 확인하세요.
-          </p>
+          <p className="text-red-600 font-bold text-lg mb-2">Supabase 연결 실패</p>
+          <p className="text-gray-700 text-sm text-center mb-4 max-w-md">{error}</p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md">
+            <p className="text-yellow-800 text-xs font-medium mb-2">해결 방법:</p>
+            <ul className="text-yellow-700 text-xs space-y-1">
+              <li>• 인터넷 연결 상태를 확인하세요</li>
+              <li>• .env.local 파일의 Supabase 설정을 확인하세요</li>
+              <li>• 페이지를 새로고침해보세요</li>
+              <li>• 문제가 지속되면 관리자에게 문의하세요</li>
+            </ul>
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            페이지 새로고침
+          </button>
         </div>
       </div>
     );
