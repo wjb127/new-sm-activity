@@ -131,8 +131,50 @@ export default function SMForm() {
       
       await addRecord(data);
       
-      // 성공 시 폼 초기화
-      reset();
+      // 성공 시 폼 초기화 (기본값 유지)
+      const nextTaskNo = nextTaskNumbers[data.category] ? (nextTaskNumbers[data.category] + 1).toString() : '1';
+      
+      reset({
+        category: data.category, // 카테고리 유지
+        taskNo: nextTaskNo, // 다음 번호로 자동 증가
+        year: data.year, // 연도 유지
+        targetMonth: data.targetMonth, // 대상월 유지
+        receiptDate: data.receiptDate, // 접수일자 유지
+        requestPath: data.requestPath, // 요청경로 유지
+        workBasisNumber: '', // 작업근거번호는 초기화
+        requestTeam: data.requestTeam, // 요청팀 유지
+        requestOrgType: data.requestOrgType, // 요청조직구분 유지
+        requester: data.requester, // 요청자 유지
+        lgUplusTeamName: data.lgUplusTeamName, // LG U+팀명 유지
+        systemPart: data.systemPart, // 시스템(파트) 유지
+        targetSystemName: data.targetSystemName, // 대상 시스템명 유지
+        slaSmActivity: '', // SLA SM Activity 초기화
+        slaSmActivityDetail: '', // SLA SM Activity(상세) 초기화
+        processType: 'SM운영', // 처리구분 기본값
+        requestContent: '', // 요청 내용 초기화
+        processContent: '', // 처리 내용 초기화
+        note: '', // 비고 초기화
+        smManager: data.smManager, // SM 담당자 유지
+        startDate: data.receiptDate, // 착수일자는 접수일자와 동일
+        expectedDeployDate: data.receiptDate, // 반영(예상)일자는 접수일자와 동일
+        deployCompleted: '', // 반영(종료) 여부 초기화
+        actualDeployDate: data.receiptDate, // 반영(종료) 일자는 접수일자와 동일
+        workTimeDays: '', // 소요시간 초기화
+        workTimeHours: '', // 소요시간 초기화
+        workTimeMinutes: '', // 소요시간 초기화
+        totalMM: '', // 최종합(MM) 초기화
+        monthlyActualBillingMM: '', // 월별 실제 청구 MM 초기화
+        errorFixRequired: '', // 오류 수정 여부 초기화
+        workReviewTarget: '', // 작업리뷰 보고대상 초기화
+        workReviewWeek: '' // 작업리뷰 주차 초기화
+      });
+      
+      // Task No 증가
+      setNextTaskNumbers(prev => ({
+        ...prev,
+        [data.category]: (prev[data.category] || 0) + 1
+      }));
+      
       alert('SM 이력이 성공적으로 등록되었습니다!');
       
     } catch (error) {
