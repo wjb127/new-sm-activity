@@ -6,11 +6,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { fetchRecords, addRecord as addRecordApi, deleteRecord as deleteRecordApi, updateRecord as updateRecordApi } from '@/lib/supabase';
 
-// 기존 레코드 타입(category가 없을 수 있음)
-interface LegacySMRecord extends Omit<SMRecord, 'category'> {
-  category?: string;
-}
-
 interface SMContextType {
   records: SMRecord[];
   addRecord: (record: SMRecordInput) => Promise<void>;
