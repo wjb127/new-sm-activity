@@ -126,24 +126,46 @@ export default function FileManager() {
       setIsUploading(true);
       setError(null);
 
+      console.log('업로드 시작:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type
+      });
+
+      // Supabase 클라이언트 상태 확인
+      console.log('Supabase 클라이언트:', supabase);
+
       // 파일명에 타임스탬프 추가하여 중복 방지
       const timestamp = new Date().getTime();
       const fileExt = file.name.split('.').pop();
       const fileName = `${file.name.replace(/\.[^/.]+$/, "")}_${timestamp}.${fileExt}`;
 
+      console.log('변환된 파일명:', fileName);
+
       // Supabase Storage에 파일 업로드
-      const { error } = await supabase.storage
+      console.log('Supabase Storage 업로드 시작...');
+      const { data, error } = await supabase.storage
         .from('ppt')
         .upload(fileName, file);
 
+      console.log('업로드 결과:', { data, error });
+
       if (error) {
-        throw error;
+        console.error('Supabase 업로드 에러:', error);
+        throw new Error(`Supabase 업로드 실패: ${error.message}`);
       }
 
       // 업로드된 파일의 다운로드 URL 생성
-      const { data: urlData } = await supabase.storage
+      console.log('다운로드 URL 생성 중...');
+      const { data: urlData, error: urlError } = await supabase.storage
         .from('ppt')
         .createSignedUrl(fileName, 3600);
+
+      console.log('URL 생성 결과:', { urlData, urlError });
+
+      if (urlError) {
+        console.warn('URL 생성 실패:', urlError);
+      }
 
       const newFile: FileInfo = {
         id: fileName,
@@ -154,12 +176,25 @@ export default function FileManager() {
         uploadedAt: new Date().toISOString(),
       };
 
+      console.log('새 파일 정보:', newFile);
+
       setFiles(prev => [newFile, ...prev]);
       alert(`${file.name} 파일이 성공적으로 업로드되었습니다!`);
 
     } catch (error) {
-      console.error('파일 업로드 오류:', error);
-      alert(`파일 업로드 중 오류가 발생했습니다: ${file.name}`);
+      console.error('파일 업로드 오류 상세:', error);
+      console.error('오류 타입:', typeof error);
+      console.error('오류 내용:', JSON.stringify(error, null, 2));
+      
+      let errorMessage = `파일 업로드 중 오류가 발생했습니다: ${file.name}`;
+      
+      if (error instanceof Error) {
+        errorMessage += `\n상세: ${error.message}`;
+      } else if (typeof error === 'object' && error !== null) {
+        errorMessage += `\n상세: ${JSON.stringify(error)}`;
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsUploading(false);
     }

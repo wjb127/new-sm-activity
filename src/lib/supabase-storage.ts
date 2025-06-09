@@ -3,7 +3,19 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
+// 환경 변수 디버깅
+console.log('=== Supabase Storage 환경 변수 확인 ===');
+console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'undefined');
+console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseKey ? `${supabaseKey.substring(0, 30)}...` : 'undefined');
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Supabase 환경 변수가 설정되지 않았습니다!');
+  throw new Error('Supabase 환경 변수가 누락되었습니다. .env.local 파일을 확인하세요.');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseKey);
+
+console.log('Supabase 클라이언트 생성 완료:', supabase);
 
 export interface FileInfo {
   id: string;
