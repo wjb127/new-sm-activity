@@ -15,7 +15,7 @@ export interface FileInfo {
   uploadedBy?: string;
 }
 
-const BUCKET_NAME = 'sm-documents';
+const BUCKET_NAME = 'ppt';
 
 // 스토리지 버킷 초기화 (필요시)
 export async function initializeBucket() {

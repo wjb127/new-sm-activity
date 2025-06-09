@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { FileInfo } from '@/lib/supabase-storage';
-
-// 임시로 간단한 파일 관리 함수들을 정의 (supabase-storage.ts의 타입 오류가 해결될 때까지)
+import { FileInfo, supabase } from '@/lib/supabase-storage';
 const validateFileType = (file: File): boolean => {
   const allowedTypes = [
     'application/vnd.ms-powerpoint', // .ppt
@@ -51,38 +49,48 @@ export default function FileManager() {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 임시 파일 목록 (실제로는 Supabase에서 가져올 예정)
+  // Supabase Storage에서 파일 목록 로드
   useEffect(() => {
     const loadFiles = async () => {
       try {
         setIsLoading(true);
-        // 임시 데이터
-        const mockFiles: FileInfo[] = [
-          {
-            id: '1',
-            name: 'SM운영가이드.pptx',
-            size: 2048576,
-            type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            url: '#',
-            uploadedAt: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            name: '시스템분석보고서.pdf',
-            size: 1024000,
-            type: 'application/pdf',
-            url: '#',
-            uploadedAt: new Date().toISOString(),
-          }
-        ];
         
-        setTimeout(() => {
-          setFiles(mockFiles);
-          setIsLoading(false);
-        }, 1000);
+        // Supabase Storage에서 파일 목록 가져오기
+        const { data: files, error } = await supabase.storage
+          .from('ppt')
+          .list('', {
+            limit: 100,
+            offset: 0
+          });
+
+        if (error) {
+          throw error;
+        }
+
+        // 파일 정보를 FileInfo 형식으로 변환
+        const fileInfos: FileInfo[] = await Promise.all(
+          (files || []).map(async (file: any) => {
+            // 다운로드 URL 생성
+            const { data: urlData } = await supabase.storage
+              .from('ppt')
+              .createSignedUrl(file.name, 3600); // 1시간 유효
+
+            return {
+              id: file.name,
+              name: file.name,
+              size: file.metadata?.size || 0,
+              type: file.metadata?.mimetype || 'application/octet-stream',
+              url: urlData?.signedUrl || '',
+              uploadedAt: file.created_at || new Date().toISOString(),
+            };
+          })
+        );
+
+        setFiles(fileInfos);
+        setIsLoading(false);
       } catch (error) {
         console.error('파일 목록 로드 오류:', error);
-        setError('파일 목록을 불러올 수 없습니다.');
+        setError('파일 목록을 불러올 수 없습니다. Supabase 연결을 확인하세요.');
         setIsLoading(false);
       }
     };
@@ -118,18 +126,33 @@ export default function FileManager() {
       setIsUploading(true);
       setError(null);
 
-      // 임시 업로드 로직 (실제로는 Supabase Storage 사용)
+      // 파일명에 타임스탬프 추가하여 중복 방지
+      const timestamp = new Date().getTime();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${file.name.replace(/\.[^/.]+$/, "")}_${timestamp}.${fileExt}`;
+
+      // Supabase Storage에 파일 업로드
+      const { error } = await supabase.storage
+        .from('ppt')
+        .upload(fileName, file);
+
+      if (error) {
+        throw error;
+      }
+
+      // 업로드된 파일의 다운로드 URL 생성
+      const { data: urlData } = await supabase.storage
+        .from('ppt')
+        .createSignedUrl(fileName, 3600);
+
       const newFile: FileInfo = {
-        id: Date.now().toString(),
+        id: fileName,
         name: file.name,
         size: file.size,
         type: file.type,
-        url: '#',
+        url: urlData?.signedUrl || '',
         uploadedAt: new Date().toISOString(),
       };
-
-      // 업로드 시뮬레이션
-      await new Promise(resolve => setTimeout(resolve, 2000));
 
       setFiles(prev => [newFile, ...prev]);
       alert(`${file.name} 파일이 성공적으로 업로드되었습니다!`);
@@ -144,8 +167,26 @@ export default function FileManager() {
 
   const downloadFile = async (file: FileInfo) => {
     try {
-      // 임시 다운로드 로직
-      alert(`${file.name} 다운로드를 시작합니다.`);
+      // Supabase Storage에서 파일 다운로드
+      const { data, error } = await supabase.storage
+        .from('ppt')
+        .download(file.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // 파일 다운로드 처리
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      alert(`${file.name} 다운로드가 완료되었습니다.`);
     } catch (error) {
       console.error('파일 다운로드 오류:', error);
       alert('파일 다운로드 중 오류가 발생했습니다.');
@@ -158,6 +199,16 @@ export default function FileManager() {
     }
 
     try {
+      // Supabase Storage에서 파일 삭제
+      const { error } = await supabase.storage
+        .from('ppt')
+        .remove([fileId]);
+
+      if (error) {
+        throw error;
+      }
+
+      // 로컬 상태에서도 제거
       setFiles(prev => prev.filter(file => file.id !== fileId));
       alert('파일이 삭제되었습니다.');
     } catch (error) {
