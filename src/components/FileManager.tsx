@@ -55,7 +55,28 @@ export default function FileManager() {
       try {
         setIsLoading(true);
         
+        console.log('파일 목록 로드 시작...');
+        
+        // 먼저 버킷 접근 권한 테스트
+        console.log('버킷 접근 권한 테스트 중...');
+        const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+        console.log('버킷 목록:', buckets);
+        
+        if (bucketError) {
+          console.error('버킷 접근 오류:', bucketError);
+          throw new Error(`버킷 접근 실패: ${bucketError.message}`);
+        }
+
+        // ppt 버킷이 존재하는지 확인
+        const pptBucket = buckets?.find((bucket: any) => bucket.name === 'ppt');
+        if (!pptBucket) {
+          throw new Error('ppt 버킷을 찾을 수 없습니다. Supabase 대시보드에서 버킷을 확인하세요.');
+        }
+        
+        console.log('ppt 버킷 정보:', pptBucket);
+        
         // Supabase Storage에서 파일 목록 가져오기
+        console.log('파일 목록 가져오기 시작...');
         const { data: files, error } = await supabase.storage
           .from('ppt')
           .list('', {
@@ -63,17 +84,26 @@ export default function FileManager() {
             offset: 0
           });
 
+        console.log('파일 목록 결과:', { files, error });
+
         if (error) {
-          throw error;
+          console.error('파일 목록 로드 에러:', error);
+          throw new Error(`파일 목록 로드 실패: ${error.message}`);
         }
 
         // 파일 정보를 FileInfo 형식으로 변환
         const fileInfos: FileInfo[] = await Promise.all(
           (files || []).map(async (file: any) => {
+            console.log('파일 처리 중:', file);
+            
             // 다운로드 URL 생성
-            const { data: urlData } = await supabase.storage
+            const { data: urlData, error: urlError } = await supabase.storage
               .from('ppt')
               .createSignedUrl(file.name, 3600); // 1시간 유효
+
+            if (urlError) {
+              console.warn('URL 생성 실패:', urlError);
+            }
 
             return {
               id: file.name,
@@ -86,11 +116,12 @@ export default function FileManager() {
           })
         );
 
+        console.log('변환된 파일 정보:', fileInfos);
         setFiles(fileInfos);
         setIsLoading(false);
       } catch (error) {
-        console.error('파일 목록 로드 오류:', error);
-        setError('파일 목록을 불러올 수 없습니다. Supabase 연결을 확인하세요.');
+        console.error('파일 목록 로드 오류 상세:', error);
+        setError(`파일 목록을 불러올 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
         setIsLoading(false);
       }
     };
