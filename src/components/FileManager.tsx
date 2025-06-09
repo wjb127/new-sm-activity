@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { 
-  FileInfo, 
-  uploadFile as uploadFileToStorage,
-  getFileList,
-  downloadFile as downloadFileFromStorage,
-  deleteFile as deleteFileFromStorage,
-  validateFileType,
-  validateFileSize 
-} from '@/lib/supabase-storage';
+  uploadFile as uploadFileToAPI, 
+  getFileList as getFileListFromAPI, 
+  downloadFile as downloadFileFromAPI, 
+  deleteFile as deleteFileFromAPI, 
+  validateFileType, 
+  validateFileSize, 
+  FileInfo 
+} from '@/lib/api-client';
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
@@ -47,7 +47,7 @@ export default function FileManager() {
         setIsLoading(true);
         console.log('파일 목록 로드 시작...');
         
-        const fileList = await getFileList();
+        const fileList = await getFileListFromAPI();
         console.log('로드된 파일 목록:', fileList);
         
         setFiles(fileList);
@@ -92,12 +92,7 @@ export default function FileManager() {
 
       console.log('파일 업로드 시작:', file.name);
 
-      const uploadedFile = await uploadFileToStorage(file);
-      
-      if (!uploadedFile) {
-        throw new Error('파일 업로드에 실패했습니다.');
-      }
-
+      const uploadedFile = await uploadFileToAPI(file);
       console.log('업로드 완료:', uploadedFile);
 
       setFiles(prev => [uploadedFile, ...prev]);
@@ -115,16 +110,11 @@ export default function FileManager() {
     try {
       console.log('파일 다운로드 시작:', file.name);
       
-      const success = await downloadFileFromStorage(file.id, file.name);
-      
-      if (success) {
-        console.log('다운로드 완료:', file.name);
-      } else {
-        throw new Error('다운로드에 실패했습니다.');
-      }
+      await downloadFileFromAPI(file.id, file.name);
+      console.log('다운로드 완료:', file.name);
     } catch (error) {
       console.error('파일 다운로드 오류:', error);
-      alert(`파일 다운로드 중 오류가 발생했습니다: ${file.name}`);
+      alert(`파일 다운로드 중 오류가 발생했습니다: ${file.name}\n상세: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
   };
 
@@ -136,17 +126,12 @@ export default function FileManager() {
     try {
       console.log('파일 삭제 시작:', fileName);
       
-      const success = await deleteFileFromStorage(fileId);
-      
-      if (success) {
-        setFiles(prev => prev.filter(file => file.id !== fileId));
-        alert(`"${fileName}" 파일이 삭제되었습니다.`);
-      } else {
-        throw new Error('삭제에 실패했습니다.');
-      }
+      await deleteFileFromAPI(fileId);
+      setFiles(prev => prev.filter(file => file.id !== fileId));
+      alert(`"${fileName}" 파일이 삭제되었습니다.`);
     } catch (error) {
       console.error('파일 삭제 오류:', error);
-      alert(`파일 삭제 중 오류가 발생했습니다: ${fileName}`);
+      alert(`파일 삭제 중 오류가 발생했습니다: ${fileName}\n상세: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
   };
 
