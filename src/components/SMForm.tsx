@@ -148,25 +148,25 @@ export default function SMForm() {
         lgUplusTeamName: data.lgUplusTeamName, // LG U+팀명 유지
         systemPart: data.systemPart, // 시스템(파트) 유지
         targetSystemName: data.targetSystemName, // 대상 시스템명 유지
-        slaSmActivity: '', // SLA SM Activity 초기화
-        slaSmActivityDetail: '', // SLA SM Activity(상세) 초기화
-        processType: 'SM운영', // 처리구분 기본값
-        requestContent: '', // 요청 내용 초기화
-        processContent: '', // 처리 내용 초기화
-        note: '', // 비고 초기화
+        slaSmActivity: data.slaSmActivity, // SLA SM Activity 유지
+        slaSmActivityDetail: data.slaSmActivityDetail, // SLA SM Activity(상세) 유지
+        processType: data.processType, // 처리구분 유지
+        requestContent: data.requestContent, // 요청 내용 유지
+        processContent: data.processContent, // 처리 내용 유지
+        note: data.note, // 비고 유지
         smManager: data.smManager, // SM 담당자 유지
         startDate: data.receiptDate, // 착수일자는 접수일자와 동일
         expectedDeployDate: data.receiptDate, // 반영(예상)일자는 접수일자와 동일
-        deployCompleted: '', // 반영(종료) 여부 초기화
+        deployCompleted: data.deployCompleted, // 반영(종료) 여부 유지
         actualDeployDate: data.receiptDate, // 반영(종료) 일자는 접수일자와 동일
-        workTimeDays: '', // 소요시간 초기화
-        workTimeHours: '', // 소요시간 초기화
-        workTimeMinutes: '', // 소요시간 초기화
-        totalMM: '', // 최종합(MM) 초기화
-        monthlyActualBillingMM: '', // 월별 실제 청구 MM 초기화
-        errorFixRequired: '', // 오류 수정 여부 초기화
-        workReviewTarget: '', // 작업리뷰 보고대상 초기화
-        workReviewWeek: '' // 작업리뷰 주차 초기화
+        workTimeDays: data.workTimeDays, // 소요시간 유지
+        workTimeHours: data.workTimeHours, // 소요시간 유지
+        workTimeMinutes: data.workTimeMinutes, // 소요시간 유지
+        totalMM: data.totalMM, // 최종합(MM) 유지
+        monthlyActualBillingMM: data.monthlyActualBillingMM, // 월별 실제 청구 MM 유지
+        errorFixRequired: data.errorFixRequired, // 오류 수정 여부 유지
+        workReviewTarget: data.workReviewTarget, // 작업리뷰 보고대상 유지
+        workReviewWeek: data.workReviewWeek // 작업리뷰 주차 유지
       });
       
       // Task No 증가
