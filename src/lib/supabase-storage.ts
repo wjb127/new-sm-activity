@@ -15,7 +15,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-console.log('Supabase 클라이언트 생성 완료:', supabase);
+console.log('Supabase 클라이언트 생성 완료');
 
 export interface FileInfo {
   id: string;
@@ -24,42 +24,11 @@ export interface FileInfo {
   type: string;
   url: string;
   uploadedAt: string;
-  uploadedBy?: string;
 }
 
 const BUCKET_NAME = 'ppt';
 
-// 스토리지 버킷 초기화 (필요시)
-export async function initializeBucket() {
-  try {
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some((bucket: any) => bucket.name === BUCKET_NAME);
-    
-    if (!bucketExists) {
-      const { error } = await supabase.storage.createBucket(BUCKET_NAME, {
-        public: false, // 보안을 위해 private으로 설정
-        allowedMimeTypes: [
-          'application/vnd.ms-powerpoint',
-          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-          'application/pdf',
-          'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'application/vnd.ms-excel',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        ],
-        fileSizeLimit: 52428800 // 50MB
-      });
-      
-      if (error) {
-        console.error('버킷 생성 오류:', error);
-      }
-    }
-  } catch (error) {
-    console.error('버킷 초기화 오류:', error);
-  }
-}
-
-// 파일 업로드
+// 파일 업로드 (Storage만 사용, DB 연동 제거)
 export async function uploadFile(file: File, folder: string = ''): Promise<FileInfo | null> {
   try {
     // 파일명에 타임스탬프 추가하여 중복 방지
@@ -68,43 +37,34 @@ export async function uploadFile(file: File, folder: string = ''): Promise<FileI
     const fileName = `${file.name.replace(/\.[^/.]+$/, "")}_${timestamp}.${fileExt}`;
     const filePath = folder ? `${folder}/${fileName}` : fileName;
 
+    console.log('Storage 업로드 시작:', filePath);
+
     const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
       .upload(filePath, file);
 
     if (error) {
+      console.error('Storage 업로드 오류:', error);
       throw error;
     }
 
-    // 파일 정보를 데이터베이스에 저장
-    const fileInfo: Omit<FileInfo, 'url'> = {
-      id: data.path,
+    console.log('Storage 업로드 성공:', data);
+
+    // Public URL 생성
+    const { data: urlData } = supabase.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(filePath);
+
+    const fileInfo: FileInfo = {
+      id: filePath,
       name: file.name,
       size: file.size,
       type: file.type,
+      url: urlData.publicUrl,
       uploadedAt: new Date().toISOString(),
     };
 
-    const { error: dbError } = await supabase
-      .from('file_uploads')
-      .insert(fileInfo);
-
-    if (dbError) {
-      console.error('파일 정보 저장 오류:', dbError);
-      // 파일은 업로드되었지만 DB 저장 실패시 파일 삭제
-      await supabase.storage.from(BUCKET_NAME).remove([data.path]);
-      throw dbError;
-    }
-
-    // 다운로드 URL 생성
-    const { data: urlData } = await supabase.storage
-      .from(BUCKET_NAME)
-      .createSignedUrl(data.path, 3600); // 1시간 유효
-
-    return {
-      ...fileInfo,
-      url: urlData?.signedUrl || ''
-    };
+    return fileInfo;
 
   } catch (error) {
     console.error('파일 업로드 오류:', error);
@@ -112,33 +72,42 @@ export async function uploadFile(file: File, folder: string = ''): Promise<FileI
   }
 }
 
-// 파일 목록 조회
+// 파일 목록 조회 (Storage만 사용)
 export async function getFileList(): Promise<FileInfo[]> {
   try {
-    const { data, error } = await supabase
-      .from('file_uploads')
-      .select('*')
-      .order('uploadedAt', { ascending: false });
+    console.log('Storage 파일 목록 조회 시작');
+
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .list('', {
+        limit: 100,
+        offset: 0
+      });
 
     if (error) {
+      console.error('파일 목록 조회 오류:', error);
       throw error;
     }
 
-    // 각 파일의 다운로드 URL 생성
-    const filesWithUrls = await Promise.all(
-              (data || []).map(async (file: any) => {
-        const { data: urlData } = await supabase.storage
-          .from(BUCKET_NAME)
-          .createSignedUrl(file.id, 3600);
+    console.log('Storage 파일 목록:', data);
 
-        return {
-          ...file,
-          url: urlData?.signedUrl || ''
-        };
-      })
-    );
+    // 파일 정보를 FileInfo 형식으로 변환
+    const fileInfos: FileInfo[] = (data || []).map((file: any) => {
+      const { data: urlData } = supabase.storage
+        .from(BUCKET_NAME)
+        .getPublicUrl(file.name);
 
-    return filesWithUrls;
+      return {
+        id: file.name,
+        name: file.name,
+        size: file.metadata?.size || 0,
+        type: file.metadata?.mimetype || 'application/octet-stream',
+        url: urlData.publicUrl,
+        uploadedAt: file.created_at || new Date().toISOString(),
+      };
+    });
+
+    return fileInfos;
   } catch (error) {
     console.error('파일 목록 조회 오류:', error);
     return [];
@@ -148,6 +117,8 @@ export async function getFileList(): Promise<FileInfo[]> {
 // 파일 다운로드
 export async function downloadFile(fileId: string, fileName: string) {
   try {
+    console.log('Storage 파일 다운로드 시작:', fileId);
+
     const { data, error } = await supabase.storage
       .from(BUCKET_NAME)
       .download(fileId);
@@ -173,28 +144,20 @@ export async function downloadFile(fileId: string, fileName: string) {
   }
 }
 
-// 파일 삭제
+// 파일 삭제 (Storage만 사용)
 export async function deleteFile(fileId: string): Promise<boolean> {
   try {
-    // 스토리지에서 파일 삭제
-    const { error: storageError } = await supabase.storage
+    console.log('Storage 파일 삭제 시작:', fileId);
+
+    const { error } = await supabase.storage
       .from(BUCKET_NAME)
       .remove([fileId]);
 
-    if (storageError) {
-      throw storageError;
+    if (error) {
+      throw error;
     }
 
-    // 데이터베이스에서 파일 정보 삭제
-    const { error: dbError } = await supabase
-      .from('file_uploads')
-      .delete()
-      .eq('id', fileId);
-
-    if (dbError) {
-      throw dbError;
-    }
-
+    console.log('Storage 파일 삭제 성공');
     return true;
   } catch (error) {
     console.error('파일 삭제 오류:', error);

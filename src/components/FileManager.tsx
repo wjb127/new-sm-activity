@@ -1,24 +1,15 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { FileInfo, supabase } from '@/lib/supabase-storage';
-const validateFileType = (file: File): boolean => {
-  const allowedTypes = [
-    'application/vnd.ms-powerpoint', // .ppt
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
-    'application/pdf', // .pdf
-    'application/msword', // .doc
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-    'application/vnd.ms-excel', // .xls
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // .xlsx
-  ];
-  return allowedTypes.includes(file.type);
-};
-
-const validateFileSize = (file: File): boolean => {
-  const maxSize = 50 * 1024 * 1024; // 50MB
-  return file.size <= maxSize;
-};
+import { 
+  FileInfo, 
+  uploadFile as uploadFileToStorage,
+  getFileList,
+  downloadFile as downloadFileFromStorage,
+  deleteFile as deleteFileFromStorage,
+  validateFileType,
+  validateFileSize 
+} from '@/lib/supabase-storage';
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
@@ -49,65 +40,20 @@ export default function FileManager() {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Supabase Storage에서 파일 목록 로드
+  // Storage에서 파일 목록 로드
   useEffect(() => {
     const loadFiles = async () => {
       try {
         setIsLoading(true);
-        
         console.log('파일 목록 로드 시작...');
         
-        // 바로 ppt 버킷의 파일 목록 가져오기 (listBuckets 권한 문제 우회)
-        console.log('ppt 버킷 파일 목록 가져오기 시작...');
-        const { data: files, error } = await supabase.storage
-          .from('ppt')
-          .list('', {
-            limit: 100,
-            offset: 0
-          });
-
-        console.log('파일 목록 결과:', { files, error });
-
-        if (error) {
-          console.error('파일 목록 로드 에러:', error);
-          // 빈 배열로 처리 (버킷이 비어있을 수도 있음)
-          if (error.message.includes('not found') || error.message.includes('does not exist')) {
-            console.log('버킷이 비어있거나 접근 권한이 없습니다. 빈 목록으로 시작합니다.');
-            setFiles([]);
-            setIsLoading(false);
-            return;
-          }
-          throw new Error(`파일 목록 로드 실패: ${error.message}`);
-        }
-
-        // 파일 정보를 FileInfo 형식으로 변환
-        const fileInfos: FileInfo[] = await Promise.all(
-          (files || []).map(async (file: any) => {
-            console.log('파일 처리 중:', file);
-            
-            // 다운로드 URL 생성 (Public 버킷이므로 createSignedUrl 대신 getPublicUrl 사용)
-            const { data: urlData } = supabase.storage
-              .from('ppt')
-              .getPublicUrl(file.name);
-
-            console.log('Public URL 생성:', urlData);
-
-            return {
-              id: file.name,
-              name: file.name,
-              size: file.metadata?.size || 0,
-              type: file.metadata?.mimetype || 'application/octet-stream',
-              url: urlData.publicUrl,
-              uploadedAt: file.created_at || new Date().toISOString(),
-            };
-          })
-        );
-
-        console.log('변환된 파일 정보:', fileInfos);
-        setFiles(fileInfos);
+        const fileList = await getFileList();
+        console.log('로드된 파일 목록:', fileList);
+        
+        setFiles(fileList);
         setIsLoading(false);
       } catch (error) {
-        console.error('파일 목록 로드 오류 상세:', error);
+        console.error('파일 목록 로드 오류:', error);
         setError(`파일 목록을 불러올 수 없습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
         setIsLoading(false);
       }
@@ -144,68 +90,22 @@ export default function FileManager() {
       setIsUploading(true);
       setError(null);
 
-      console.log('업로드 시작:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type
-      });
+      console.log('파일 업로드 시작:', file.name);
 
-      // 파일명에 타임스탬프 추가하여 중복 방지
-      const timestamp = new Date().getTime();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${file.name.replace(/\.[^/.]+$/, "")}_${timestamp}.${fileExt}`;
-
-      console.log('변환된 파일명:', fileName);
-
-      // Supabase Storage에 파일 업로드
-      console.log('Supabase Storage 업로드 시작...');
-      const { data, error } = await supabase.storage
-        .from('ppt')
-        .upload(fileName, file);
-
-      console.log('업로드 결과:', { data, error });
-
-      if (error) {
-        console.error('Supabase 업로드 에러:', error);
-        throw new Error(`Supabase 업로드 실패: ${error.message}`);
+      const uploadedFile = await uploadFileToStorage(file);
+      
+      if (!uploadedFile) {
+        throw new Error('파일 업로드에 실패했습니다.');
       }
 
-      // Public 버킷이므로 getPublicUrl 사용
-      console.log('Public URL 생성 중...');
-      const { data: urlData } = supabase.storage
-        .from('ppt')
-        .getPublicUrl(fileName);
+      console.log('업로드 완료:', uploadedFile);
 
-      console.log('URL 생성 결과:', urlData);
-
-      const newFile: FileInfo = {
-        id: fileName,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        url: urlData.publicUrl,
-        uploadedAt: new Date().toISOString(),
-      };
-
-      console.log('새 파일 정보:', newFile);
-
-      setFiles(prev => [newFile, ...prev]);
+      setFiles(prev => [uploadedFile, ...prev]);
       alert(`${file.name} 파일이 성공적으로 업로드되었습니다!`);
 
     } catch (error) {
-      console.error('파일 업로드 오류 상세:', error);
-      console.error('오류 타입:', typeof error);
-      console.error('오류 내용:', JSON.stringify(error, null, 2));
-      
-      let errorMessage = `파일 업로드 중 오류가 발생했습니다: ${file.name}`;
-      
-      if (error instanceof Error) {
-        errorMessage += `\n상세: ${error.message}`;
-      } else if (typeof error === 'object' && error !== null) {
-        errorMessage += `\n상세: ${JSON.stringify(error)}`;
-      }
-      
-      alert(errorMessage);
+      console.error('파일 업로드 오류:', error);
+      alert(`파일 업로드 중 오류가 발생했습니다: ${file.name}\n상세: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     } finally {
       setIsUploading(false);
     }
@@ -213,53 +113,40 @@ export default function FileManager() {
 
   const downloadFile = async (file: FileInfo) => {
     try {
-      // Supabase Storage에서 파일 다운로드
-      const { data, error } = await supabase.storage
-        .from('ppt')
-        .download(file.id);
-
-      if (error) {
-        throw error;
+      console.log('파일 다운로드 시작:', file.name);
+      
+      const success = await downloadFileFromStorage(file.id, file.name);
+      
+      if (success) {
+        console.log('다운로드 완료:', file.name);
+      } else {
+        throw new Error('다운로드에 실패했습니다.');
       }
-
-      // 파일 다운로드 처리
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      alert(`${file.name} 다운로드가 완료되었습니다.`);
     } catch (error) {
       console.error('파일 다운로드 오류:', error);
-      alert('파일 다운로드 중 오류가 발생했습니다.');
+      alert(`파일 다운로드 중 오류가 발생했습니다: ${file.name}`);
     }
   };
 
-  const deleteFile = async (fileId: string) => {
-    if (!confirm('이 파일을 삭제하시겠습니까?')) {
+  const deleteFile = async (fileId: string, fileName: string) => {
+    if (!confirm(`"${fileName}" 파일을 삭제하시겠습니까?`)) {
       return;
     }
 
     try {
-      // Supabase Storage에서 파일 삭제
-      const { error } = await supabase.storage
-        .from('ppt')
-        .remove([fileId]);
-
-      if (error) {
-        throw error;
+      console.log('파일 삭제 시작:', fileName);
+      
+      const success = await deleteFileFromStorage(fileId);
+      
+      if (success) {
+        setFiles(prev => prev.filter(file => file.id !== fileId));
+        alert(`"${fileName}" 파일이 삭제되었습니다.`);
+      } else {
+        throw new Error('삭제에 실패했습니다.');
       }
-
-      // 로컬 상태에서도 제거
-      setFiles(prev => prev.filter(file => file.id !== fileId));
-      alert('파일이 삭제되었습니다.');
     } catch (error) {
       console.error('파일 삭제 오류:', error);
-      alert('파일 삭제 중 오류가 발생했습니다.');
+      alert(`파일 삭제 중 오류가 발생했습니다: ${fileName}`);
     }
   };
 
@@ -400,7 +287,7 @@ export default function FileManager() {
                       다운로드
                     </button>
                     <button
-                      onClick={() => deleteFile(file.id)}
+                      onClick={() => deleteFile(file.id, file.name)}
                       className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
                     >
                       삭제
