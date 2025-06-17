@@ -39,6 +39,29 @@ const PRESET_SCHEDULES = [
     }
   },
   {
+    name: 'U+PLAN 조간점검',
+    description: '평일 매일 오전 9시',
+    cronExpression: '0 9 * * 1-5',
+    template: {
+      category: 'PLAN',
+      requestTeam: '경영지원시스템팀',
+      requestOrgType: 'SM운영조직(LGCNS/협력업체)',
+      requester: '한상명',
+      lgUplusTeamName: '경영분석팀',
+      systemPart: '경영관리시스템',
+      targetSystemName: '경영관리 시스템(USIS)',
+      processType: 'SM운영',
+      requestContent: 'U+PLAN 조간점검',
+      processContent: 'U+PLAN 조간점검',
+      smManager: '위승빈',
+      deployCompleted: '반영(처리)완료',
+      workTimeDays: '0',
+      workTimeHours: '0',
+      workTimeMinutes: '30',
+      totalMM: '0.062'
+    }
+  },
+  {
     name: '주간 정기점검',
     description: '매주 월요일 오전 9시',
     cronExpression: '0 9 * * 1',
@@ -221,6 +244,8 @@ export default function SchedulerManager() {
   const getCronDescription = (cron: string): string => {
     const descriptions: Record<string, string> = {
       '0 9 * * 1': '매주 월요일 오전 9시',
+      '0 9 * * 1-5': '평일 매일 오전 9시',
+      '0 9 * * *': '매일 오전 9시',
       '0 17 1 * *': '매월 1일 오후 5시',
       '0 8 * * *': '매일 오전 8시',
       '*/30 * * * *': '30분마다',
@@ -279,6 +304,49 @@ export default function SchedulerManager() {
          alert('대시보드 조간점검 스케줄이 성공적으로 등록되었습니다!\n매일 오전 9시에 자동으로 실행됩니다.');
   };
 
+  // U+PLAN 조간점검 스케줄 자동 등록
+  const handleAddUPlanSchedule = () => {
+    const uplanSchedule = {
+      name: 'U+PLAN 조간점검',
+      cronExpression: '0 9 * * 1-5',
+      isActive: true,
+      template: {
+        category: 'PLAN',
+        requestTeam: '경영지원시스템팀',
+        requestOrgType: 'SM운영조직(LGCNS/협력업체)',
+        requester: '한상명',
+        lgUplusTeamName: '경영분석팀',
+        systemPart: '경영관리시스템',
+        targetSystemName: '경영관리 시스템(USIS)',
+        processType: 'SM운영',
+        requestContent: 'U+PLAN 조간점검',
+        processContent: 'U+PLAN 조간점검',
+        smManager: '위승빈',
+        deployCompleted: '반영(처리)완료',
+        workTimeDays: '0',
+        workTimeHours: '0',
+        workTimeMinutes: '30',
+        totalMM: '0.062'
+      }
+    };
+
+    // 이미 등록된 U+PLAN 조간점검이 있는지 확인
+    const existingTask = tasks.find(task => task.name === 'U+PLAN 조간점검');
+    if (existingTask) {
+      alert('U+PLAN 조간점검 스케줄이 이미 등록되어 있습니다.');
+      return;
+    }
+
+    const newScheduledTask: ScheduledTask = {
+      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ...uplanSchedule
+    };
+    
+    const updatedTasks = [...tasks, newScheduledTask];
+    saveTasks(updatedTasks);
+    alert('U+PLAN 조간점검 스케줄이 성공적으로 등록되었습니다!\n평일 매일 오전 9시에 자동으로 실행됩니다.');
+  };
+
   return (
     <div className="p-4 bg-white rounded-lg shadow">
       <div className="flex justify-between items-center mb-4">
@@ -289,6 +357,12 @@ export default function SchedulerManager() {
             className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           >
             대시보드 조간점검 등록
+          </button>
+          <button
+            onClick={handleAddUPlanSchedule}
+            className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+          >
+            U+PLAN 조간점검 등록
           </button>
           <button
             onClick={() => setShowAddForm(!showAddForm)}
@@ -461,6 +535,8 @@ export default function SchedulerManager() {
       <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <h4 className="font-semibold text-blue-800 mb-2">Cron 표현식 예제</h4>
         <div className="text-sm text-blue-700 space-y-1">
+          <p><code>0 9 * * *</code> - 매일 오전 9시</p>
+          <p><code>0 9 * * 1-5</code> - 평일 매일 오전 9시 (월~금)</p>
           <p><code>0 9 * * 1</code> - 매주 월요일 오전 9시</p>
           <p><code>0 17 1 * *</code> - 매월 1일 오후 5시</p>
           <p><code>0 8 * * *</code> - 매일 오전 8시</p>
@@ -468,7 +544,7 @@ export default function SchedulerManager() {
           <p><code>0 */6 * * *</code> - 6시간마다</p>
         </div>
         <p className="text-xs text-blue-600 mt-2">
-          형식: 분(0-59) 시(0-23) 일(1-31) 월(1-12) 요일(0-7, 0과 7은 일요일)
+          형식: 분(0-59) 시(0-23) 일(1-31) 월(1-12) 요일(0-7, 0과 7은 일요일, 1-5는 평일)
         </p>
       </div>
     </div>

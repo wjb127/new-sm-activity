@@ -52,6 +52,24 @@ export const DEFAULT_TEMPLATES = {
     workTimeMinutes: '30',
     totalMM: '0.062',
 
+  },
+  uplan_check: {
+    category: 'PLAN',
+    requestTeam: '경영지원시스템팀',
+    requestOrgType: 'SM운영조직(LGCNS/협력업체)',
+    requester: '한상명',
+    lgUplusTeamName: '경영분석팀',
+    systemPart: '경영관리시스템',
+    targetSystemName: '경영관리 시스템(USIS)',
+    processType: 'SM운영',
+    requestContent: 'U+PLAN 조간점검',
+    processContent: 'U+PLAN 조간점검',
+    smManager: '위승빈',
+    deployCompleted: '반영(처리)완료',
+    workTimeDays: '0',
+    workTimeHours: '0',
+    workTimeMinutes: '30',
+    totalMM: '0.062'
   }
 };
 
@@ -278,6 +296,12 @@ export const PRESET_SCHEDULES = [
     cronExpression: '0 9 * * *', // 매일 오전 9시
     template: DEFAULT_TEMPLATES.dashboard_check,
     description: '매일 오전 9시에 대시보드/결합/채권재고 조간점검 작업을 생성합니다.'
+  },
+  {
+    name: 'U+PLAN 조간점검',
+    cronExpression: '0 9 * * 1-5', // 평일 매일 오전 9시
+    template: DEFAULT_TEMPLATES.uplan_check,
+    description: '평일 매일 오전 9시에 U+PLAN 조간점검 작업을 생성합니다.'
   },
   {
     name: '주간 시스템 점검',
