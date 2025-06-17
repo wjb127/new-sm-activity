@@ -36,6 +36,23 @@ export const DEFAULT_TEMPLATES = {
     requestOrgType: '내부',
     systemPart: '관리시스템',
     workReviewTarget: 'Y',
+  },
+  dashboard_check: {
+    category: '대시보드',
+    processType: 'SM운영',
+    slaSmActivity: '조간점검',
+    slaSmActivityDetail: '대시보드/결합/채권재고 조간점검',
+    requestTeam: '시스템운영팀',
+    requestOrgType: '내부',
+    systemPart: '대시보드시스템',
+    requestContent: '대시보드/결합/채권재고 조간점검',
+    processContent: '대시보드/결합/채권재고 조간점검',
+    workTimeDays: '0',
+    workTimeHours: '0',
+    workTimeMinutes: '30',
+    totalMM: '0.062',
+    monthlyActualBillingMM: '0.062',
+    workReviewTarget: 'Y',
   }
 };
 
@@ -205,6 +222,27 @@ export function getScheduledTasks(): ScheduledTask[] {
   return [...scheduledTasks];
 }
 
+// 스케줄 작업 수동 실행
+export async function executeScheduledTaskNow(taskId: string): Promise<boolean> {
+  const task = scheduledTasks.find(t => t.id === taskId);
+  if (!task) {
+    console.error(`스케줄 작업을 찾을 수 없습니다: ${taskId}`);
+    return false;
+  }
+
+  try {
+    console.log(`🔄 수동 실행: ${task.name}`);
+    task.lastRun = new Date().toISOString();
+    await createScheduledRecord(task.template, task.name);
+    saveScheduledTasks();
+    console.log(`✅ 수동 실행 완료: ${task.name}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ 수동 실행 실패: ${task.name}`, error);
+    return false;
+  }
+}
+
 // 스케줄러 초기화
 export function initializeScheduler(): void {
   loadScheduledTasks();
@@ -230,6 +268,12 @@ export function cleanupScheduler(): void {
 
 // 미리 정의된 스케줄 작업들
 export const PRESET_SCHEDULES = [
+  {
+    name: '대시보드 조간점검',
+    cronExpression: '0 9 * * *', // 매일 오전 9시
+    template: DEFAULT_TEMPLATES.dashboard_check,
+    description: '매일 오전 9시에 대시보드/결합/채권재고 조간점검 작업을 생성합니다.'
+  },
   {
     name: '주간 시스템 점검',
     cronExpression: '0 9 * * 1', // 매주 월요일 오전 9시

@@ -18,6 +18,28 @@ export interface ScheduledTask {
 // 미리 정의된 스케줄 템플릿
 const PRESET_SCHEDULES = [
   {
+    name: '대시보드 조간점검',
+    description: '매일 오전 9시',
+    cronExpression: '0 9 * * *',
+    template: {
+      category: '대시보드',
+      processType: 'SM운영',
+      slaSmActivity: '조간점검',
+      slaSmActivityDetail: '대시보드/결합/채권재고 조간점검',
+      requestTeam: '시스템운영팀',
+      requestOrgType: '내부',
+      systemPart: '대시보드시스템',
+      requestContent: '대시보드/결합/채권재고 조간점검',
+      processContent: '대시보드/결합/채권재고 조간점검',
+      workTimeDays: '0',
+      workTimeHours: '0',
+      workTimeMinutes: '30',
+      totalMM: '0.062',
+      monthlyActualBillingMM: '0.062',
+      workReviewTarget: 'Y',
+    }
+  },
+  {
     name: '주간 정기점검',
     description: '매주 월요일 오전 9시',
     cronExpression: '0 9 * * 1',
@@ -215,16 +237,66 @@ export default function SchedulerManager() {
     return format(new Date(dateStr), 'yyyy-MM-dd HH:mm', { locale: ko });
   };
 
+  // 대시보드 조간점검 스케줄 자동 등록
+  const handleAddDashboardSchedule = () => {
+    const dashboardSchedule = {
+      name: '대시보드 조간점검',
+      cronExpression: '0 9 * * *',
+      isActive: true,
+      template: {
+        category: '대시보드',
+        processType: 'SM운영',
+        slaSmActivity: '조간점검',
+        slaSmActivityDetail: '대시보드/결합/채권재고 조간점검',
+        requestTeam: '시스템운영팀',
+        requestOrgType: '내부',
+        systemPart: '대시보드시스템',
+        requestContent: '대시보드/결합/채권재고 조간점검',
+        processContent: '대시보드/결합/채권재고 조간점검',
+        workTimeDays: '0',
+        workTimeHours: '0',
+        workTimeMinutes: '30',
+        totalMM: '0.062',
+        monthlyActualBillingMM: '0.062',
+        workReviewTarget: 'Y',
+      }
+    };
+
+    // 이미 등록된 대시보드 조간점검이 있는지 확인
+    const existingTask = tasks.find(task => task.name === '대시보드 조간점검');
+    if (existingTask) {
+      alert('대시보드 조간점검 스케줄이 이미 등록되어 있습니다.');
+      return;
+    }
+
+    const newScheduledTask: ScheduledTask = {
+      id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ...dashboardSchedule
+    };
+    
+    const updatedTasks = [...tasks, newScheduledTask];
+    saveTasks(updatedTasks);
+    alert('대시보드 조간점검 스케줄이 성공적으로 등록되었습니다!\n매일 오전 9시에 자동으로 실행됩니다.');
+  };
+
   return (
     <div className="p-4 bg-white rounded-lg shadow">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-gray-800">스케줄러 관리</h2>
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          {showAddForm ? '취소' : '새 스케줄 추가'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleAddDashboardSchedule}
+            className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            대시보드 조간점검 등록
+          </button>
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            {showAddForm ? '취소' : '새 스케줄 추가'}
+          </button>
+        </div>
       </div>
 
       {showAddForm && (
@@ -359,7 +431,7 @@ export default function SchedulerManager() {
                       disabled={loading}
                       className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
                     >
-                      {loading ? '실행중...' : '수동실행'}
+                      {loading ? '실행중...' : '지금 수행하기'}
                     </button>
                     <button
                       onClick={() => handleToggleTask(task.id, task.isActive)}
