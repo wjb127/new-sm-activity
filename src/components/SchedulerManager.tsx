@@ -19,8 +19,8 @@ export interface ScheduledTask {
 const PRESET_SCHEDULES = [
   {
     name: '대시보드 조간점검',
-    description: '매일 오전 9시',
-    cronExpression: '0 9 * * *',
+    description: '평일 매일 오전 9시',
+    cronExpression: '0 9 * * 1-5',
     template: {
       category: '대시보드',
       processType: 'SM운영',
@@ -265,7 +265,7 @@ export default function SchedulerManager() {
   const handleAddDashboardSchedule = () => {
     const dashboardSchedule = {
       name: '대시보드 조간점검',
-      cronExpression: '0 9 * * *',
+      cronExpression: '0 9 * * 1-5',
       isActive: true,
       template: {
         category: '대시보드',
@@ -301,7 +301,7 @@ export default function SchedulerManager() {
     
     const updatedTasks = [...tasks, newScheduledTask];
     saveTasks(updatedTasks);
-         alert('대시보드 조간점검 스케줄이 성공적으로 등록되었습니다!\n매일 오전 9시에 자동으로 실행됩니다.');
+         alert('대시보드 조간점검 스케줄이 성공적으로 등록되었습니다!\n평일 매일 오전 9시에 자동으로 실행됩니다.');
   };
 
   // U+PLAN 조간점검 스케줄 자동 등록

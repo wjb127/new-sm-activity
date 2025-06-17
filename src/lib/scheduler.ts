@@ -293,9 +293,9 @@ export function cleanupScheduler(): void {
 export const PRESET_SCHEDULES = [
   {
     name: '대시보드 조간점검',
-    cronExpression: '0 9 * * *', // 매일 오전 9시
+    cronExpression: '0 9 * * 1-5', // 평일 매일 오전 9시
     template: DEFAULT_TEMPLATES.dashboard_check,
-    description: '매일 오전 9시에 대시보드/결합/채권재고 조간점검 작업을 생성합니다.'
+    description: '평일 매일 오전 9시에 대시보드/결합/채권재고 조간점검 작업을 생성합니다.'
   },
   {
     name: 'U+PLAN 조간점검',
