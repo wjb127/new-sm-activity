@@ -7,6 +7,10 @@
     {
       "path": "/api/scheduler/uplan", 
       "schedule": "0 9 * * 1-5"
+    },
+    {
+      "path": "/api/scheduler/daily",
+      "schedule": "10 0 * * *"
     }
   ]
 } 
