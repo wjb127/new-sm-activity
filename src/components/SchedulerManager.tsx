@@ -262,12 +262,12 @@ export default function SchedulerManager() {
       }
     };
 
-    // 이미 등록된 대시보드 조간점검이 있는지 확인
-    const existingTask = tasks.find(task => task.name === '대시보드 조간점검');
-    if (existingTask) {
-      alert('대시보드 조간점검 스케줄이 이미 등록되어 있습니다.');
-      return;
-    }
+         // 이미 등록된 대시보드 조간점검이 있는지 확인
+     const existingTask = tasks.find(task => task.name === '대시보드 조간점검');
+     if (existingTask) {
+       alert('대시보드 조간점검 스케줄이 이미 등록되어 있습니다.');
+       return;
+     }
 
     const newScheduledTask: ScheduledTask = {
       id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -276,7 +276,7 @@ export default function SchedulerManager() {
     
     const updatedTasks = [...tasks, newScheduledTask];
     saveTasks(updatedTasks);
-    alert('대시보드 조간점검 스케줄이 성공적으로 등록되었습니다!\n매일 오전 9시에 자동으로 실행됩니다.');
+         alert('대시보드 조간점검 스케줄이 성공적으로 등록되었습니다!\n매일 오전 9시에 자동으로 실행됩니다.');
   };
 
   return (
