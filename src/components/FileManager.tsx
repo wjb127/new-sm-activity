@@ -90,17 +90,43 @@ export default function FileManager() {
       setIsUploading(true);
       setError(null);
 
-      console.log('파일 업로드 시작:', file.name);
+      console.log('🚀 [클라이언트] 파일 업로드 시작:', file.name);
+      console.log('📁 [클라이언트] 파일 정보:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: new Date(file.lastModified).toISOString()
+      });
 
+      const startTime = Date.now();
+      
       const uploadedFile = await uploadFileToAPI(file);
-      console.log('업로드 완료:', uploadedFile);
+      
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      console.log(`✅ [클라이언트] 업로드 완료 (${duration}ms):`, uploadedFile);
 
       setFiles(prev => [uploadedFile, ...prev]);
-      alert(`${file.name} 파일이 성공적으로 업로드되었습니다!`);
+      alert(`${file.name} 파일이 성공적으로 업로드되었습니다!\n소요시간: ${duration}ms`);
 
     } catch (error) {
-      console.error('파일 업로드 오류:', error);
-      alert(`파일 업로드 중 오류가 발생했습니다: ${file.name}\n상세: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      console.error('❌ [클라이언트] 파일 업로드 오류:', error);
+      
+      let errorMessage = `파일 업로드 중 오류가 발생했습니다: ${file.name}`;
+      
+      if (error instanceof Error) {
+        console.error('❌ [클라이언트] 오류 메시지:', error.message);
+        console.error('❌ [클라이언트] 오류 스택:', error.stack);
+        errorMessage += `\n상세: ${error.message}`;
+      }
+      
+      // 네트워크 오류인지 확인
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage += '\n네트워크 연결을 확인해주세요.';
+      }
+      
+      alert(errorMessage);
     } finally {
       setIsUploading(false);
     }
