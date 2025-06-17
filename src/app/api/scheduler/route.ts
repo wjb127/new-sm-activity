@@ -26,45 +26,52 @@ export async function POST(request: NextRequest) {
     // 고유한 TASK NO 생성
     const taskNo = `API-${format(now, 'yyyyMMdd')}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
     
+    console.log(`🚀 [API-SCHEDULER] 스케줄 작업 실행 시작: ${taskName}`);
+    console.log(`📋 [API-SCHEDULER] 입력된 템플릿:`, template);
+
     const newRecord: SMRecord = {
       id: uuidv4(),
-      category: template?.category || '기타',
+      category: template?.category || '',
       taskNo: taskNo,
       year: currentYear,
       targetMonth: currentMonth,
       receiptDate: currentDate,
-      requestPath: template?.requestPath || 'API 호출',
-      workBasisNumber: template?.workBasisNumber || `API-${currentYear}`,
-      requestTeam: template?.requestTeam || '시스템팀',
-      requestOrgType: template?.requestOrgType || '내부',
-      requester: template?.requester || 'API',
-      lgUplusTeamName: template?.lgUplusTeamName || 'LG U+ 운영팀',
-      systemPart: template?.systemPart || '전체',
-      targetSystemName: template?.targetSystemName || '통합시스템',
-      slaSmActivity: template?.slaSmActivity || '자동작업',
-      slaSmActivityDetail: template?.slaSmActivityDetail || taskName,
-      processType: template?.processType || 'SM운영',
-      requestContent: template?.requestContent || `[API 생성] ${taskName} - ${currentDate}`,
-      processContent: template?.processContent || 'API를 통한 자동 생성',
-      note: template?.note || `API 호출에 의해 생성됨 (${currentDate})`,
-      smManager: template?.smManager || '시스템',
-      startDate: currentDate,
+      requestPath: template?.requestPath || '',
+      workBasisNumber: template?.workBasisNumber || '',
+      requestTeam: template?.requestTeam || '',
+      requestOrgType: template?.requestOrgType || '',
+      requester: template?.requester || '',
+      lgUplusTeamName: template?.lgUplusTeamName || '',
+      systemPart: template?.systemPart || '',
+      targetSystemName: template?.targetSystemName || '',
+      slaSmActivity: template?.slaSmActivity || '',
+      slaSmActivityDetail: template?.slaSmActivityDetail || '',
+      processType: template?.processType || '',
+      requestContent: template?.requestContent || '',
+      processContent: template?.processContent || '',
+      note: template?.note || '',
+      smManager: template?.smManager || '',
+      startDate: template?.startDate || currentDate,
       expectedDeployDate: template?.expectedDeployDate || currentDate,
-      deployCompleted: template?.deployCompleted || 'N',
-      actualDeployDate: template?.actualDeployDate || '',
-      workTimeDays: template?.workTimeDays || '1',
-      workTimeHours: template?.workTimeHours || '8',
-      workTimeMinutes: template?.workTimeMinutes || '0',
-      totalMM: template?.totalMM || '1.0',
-      monthlyActualBillingMM: template?.monthlyActualBillingMM || '1.0',
-      errorFixRequired: template?.errorFixRequired || 'N',
-      workReviewTarget: template?.workReviewTarget || 'Y',
-      workReviewWeek: template?.workReviewWeek || format(now, 'yyyy-ww'),
+      deployCompleted: template?.deployCompleted || '',
+      actualDeployDate: template?.actualDeployDate || currentDate,
+      workTimeDays: template?.workTimeDays || '',
+      workTimeHours: template?.workTimeHours || '',
+      workTimeMinutes: template?.workTimeMinutes || '',
+      totalMM: template?.totalMM || '',
+      monthlyActualBillingMM: template?.monthlyActualBillingMM || '',
+      errorFixRequired: template?.errorFixRequired || '',
+      workReviewTarget: template?.workReviewTarget || '',
+      workReviewWeek: template?.workReviewWeek || '',
       createdAt: new Date().toISOString()
     };
 
+    console.log(`📝 [API-SCHEDULER] 생성될 레코드:`, newRecord);
+
     // DB에 레코드 추가
     const result = await addRecord(newRecord);
+
+    console.log(`✅ [API-SCHEDULER] 스케줄된 작업 완료: ${taskName} (ID: ${newRecord.id})`);
 
     return NextResponse.json({
       success: true,

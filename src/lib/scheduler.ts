@@ -42,17 +42,16 @@ export const DEFAULT_TEMPLATES = {
     processType: 'SM운영',
     slaSmActivity: '조간점검',
     slaSmActivityDetail: '대시보드/결합/채권재고 조간점검',
-    requestTeam: '시스템운영팀',
-    requestOrgType: '내부',
-    systemPart: '대시보드시스템',
+    requestTeam: '경영지원시스템팀',
+    requestOrgType: 'SM운영조직(LGCNS/협력업체)',
+    systemPart: '경영관리시스템',
     requestContent: '대시보드/결합/채권재고 조간점검',
     processContent: '대시보드/결합/채권재고 조간점검',
     workTimeDays: '0',
     workTimeHours: '0',
     workTimeMinutes: '30',
     totalMM: '0.062',
-    monthlyActualBillingMM: '0.062',
-    workReviewTarget: 'Y',
+
   }
 };
 
@@ -80,6 +79,9 @@ export function saveScheduledTasks(): void {
 
 // 자동 데이터 생성 함수
 async function createScheduledRecord(template: Partial<SMRecord>, taskName: string): Promise<void> {
+  console.log(`🚀 [SCHEDULER] 스케줄 작업 실행 시작: ${taskName}`);
+  console.log(`📋 [SCHEDULER] 입력된 템플릿:`, template);
+  
   const now = new Date();
   const currentYear = format(now, 'yyyy');
   const currentMonth = format(now, 'yyyy-MM');
@@ -125,11 +127,13 @@ async function createScheduledRecord(template: Partial<SMRecord>, taskName: stri
     createdAt: new Date().toISOString()
   };
 
+  console.log(`📝 [SCHEDULER] 생성될 레코드:`, newRecord);
+
   try {
     await addRecord(newRecord);
-    console.log(`✅ 스케줄된 작업 완료: ${taskName} (ID: ${newRecord.id})`);
+    console.log(`✅ [SCHEDULER] 스케줄된 작업 완료: ${taskName} (ID: ${newRecord.id})`);
   } catch (error) {
-    console.error(`❌ 스케줄된 작업 실패: ${taskName}`, error);
+    console.error(`❌ [SCHEDULER] 스케줄된 작업 실패: ${taskName}`, error);
   }
 }
 
@@ -226,19 +230,20 @@ export function getScheduledTasks(): ScheduledTask[] {
 export async function executeScheduledTaskNow(taskId: string): Promise<boolean> {
   const task = scheduledTasks.find(t => t.id === taskId);
   if (!task) {
-    console.error(`스케줄 작업을 찾을 수 없습니다: ${taskId}`);
+    console.error(`[SCHEDULER] 스케줄 작업을 찾을 수 없습니다: ${taskId}`);
     return false;
   }
 
   try {
-    console.log(`🔄 수동 실행: ${task.name}`);
+    console.log(`🔄 [SCHEDULER] 수동 실행 시작: ${task.name}`);
+    console.log(`📋 [SCHEDULER] 작업 템플릿:`, task.template);
     task.lastRun = new Date().toISOString();
     await createScheduledRecord(task.template, task.name);
     saveScheduledTasks();
-    console.log(`✅ 수동 실행 완료: ${task.name}`);
+    console.log(`✅ [SCHEDULER] 수동 실행 완료: ${task.name}`);
     return true;
   } catch (error) {
-    console.error(`❌ 수동 실행 실패: ${task.name}`, error);
+    console.error(`❌ [SCHEDULER] 수동 실행 실패: ${task.name}`, error);
     return false;
   }
 }
