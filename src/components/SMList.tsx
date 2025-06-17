@@ -9,13 +9,15 @@ import { useForm } from 'react-hook-form';
 const thStyle = "px-2 py-1 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer";
 const tdStyle = "px-2 py-1 whitespace-nowrap text-xs font-medium text-gray-900";
 const tdContentStyle = "px-2 py-1 text-xs text-gray-900 max-w-[100px] truncate";
+const tdLongContentStyle = "px-2 py-1 text-xs text-gray-900 max-w-[200px] truncate cursor-help";
 
 // 수정 모달 컴포넌트
-function EditModal({ record, isOpen, onClose, onSave }: {
+function EditModal({ record, isOpen, onClose, onSave, onDelete }: {
   record: SMRecord | null;
   isOpen: boolean;
   onClose: () => void;
   onSave: (id: string, data: SMRecordInput) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }) {
   const { register, handleSubmit, reset, setValue, watch } = useForm<SMRecordInput>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,128 +89,163 @@ function EditModal({ record, isOpen, onClose, onSave }: {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-red-600 mb-1">카테고리</label>
-                <input {...register('category')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input {...register('category')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">TASK NO</label>
-                <input {...register('taskNo')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">TASK NO</label>
+                <input {...register('taskNo')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">연도</label>
-                <input {...register('year')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">연도</label>
+                <input {...register('year')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">대상 월</label>
-                <input {...register('targetMonth')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">대상 월</label>
+                <input {...register('targetMonth')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-red-600 mb-1">접수일자</label>
-                <input {...register('receiptDate')} type="date" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input {...register('receiptDate')} type="date" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-red-600 mb-1">요청경로</label>
-                <input {...register('requestPath')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input {...register('requestPath')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">작업근거 번호</label>
-                <input {...register('workBasisNumber')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">작업근거 번호</label>
+                <input {...register('workBasisNumber')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-red-600 mb-1">요청팀</label>
-                <input {...register('requestTeam')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input {...register('requestTeam')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">요청조직구분</label>
-                <input {...register('requestOrgType')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">요청조직구분</label>
+                <input {...register('requestOrgType')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-red-600 mb-1">요청자</label>
-                <input {...register('requester')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input {...register('requester')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">LG U+팀명</label>
-                <input {...register('lgUplusTeamName')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">LG U+팀명</label>
+                <input {...register('lgUplusTeamName')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">시스템(파트)</label>
-                <input {...register('systemPart')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">시스템(파트)</label>
+                <input {...register('systemPart')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">대상 시스템명</label>
-                <input {...register('targetSystemName')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">대상 시스템명</label>
+                <input {...register('targetSystemName')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">SLA SM Activity</label>
-                <input {...register('slaSmActivity')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">SLA SM Activity</label>
+                <input {...register('slaSmActivity')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">SLA SM Activity(상세)</label>
-                <input {...register('slaSmActivityDetail')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">SLA SM Activity(상세)</label>
+                <input {...register('slaSmActivityDetail')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">처리구분</label>
-                <input {...register('processType')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" defaultValue="SM운영" />
+                <label className="block text-sm font-medium text-black mb-1">처리구분</label>
+                <input {...register('processType')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" defaultValue="SM운영" />
               </div>
-              <div className="md:col-span-2">
+              <div className="lg:col-span-3">
                 <label className="block text-sm font-medium text-red-600 mb-1">요청 내용</label>
-                <input 
+                <textarea 
                   {...register('requestContent')} 
-                  className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" 
-                  list="editRequestContentOptions"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-black font-medium resize-vertical"
+                  rows={3}
+                  placeholder="요청사항을 상세히 입력해주세요..."
                 />
-                <datalist id="editRequestContentOptions">
-                  <option value="시스템 오류 수정 요청" />
-                  <option value="데이터 수정 요청" />
-                  <option value="화면 개선 요청" />
-                  <option value="신규 기능 개발 요청" />
-                  <option value="배치 프로그램 수정 요청" />
-                  <option value="권한 설정 요청" />
-                  <option value="인터페이스 오류 수정" />
-                  <option value="성능 개선 요청" />
-                  <option value="보고서 수정 요청" />
-                  <option value="메뉴 추가/수정 요청" />
-                  <option value="코드 관리 요청" />
-                  <option value="DB 스키마 변경 요청" />
-                  <option value="시스템 설정 변경 요청" />
-                  <option value="사용자 매뉴얼 업데이트 요청" />
-                  <option value="테스트 환경 구성 요청" />
-                </datalist>
+                <div className="mt-1">
+                  <label className="text-xs text-gray-500">자주 사용하는 요청 내용:</label>
+                  <select 
+                    className="ml-2 text-xs border border-gray-200 rounded px-2 py-1"
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const currentValue = document.querySelector('textarea[name="requestContent"]') as HTMLTextAreaElement;
+                        if (currentValue) {
+                          currentValue.value = e.target.value;
+                          currentValue.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        e.target.value = '';
+                      }
+                    }}
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="시스템 오류 수정 요청">시스템 오류 수정 요청</option>
+                    <option value="데이터 수정 요청">데이터 수정 요청</option>
+                    <option value="화면 개선 요청">화면 개선 요청</option>
+                    <option value="신규 기능 개발 요청">신규 기능 개발 요청</option>
+                    <option value="배치 프로그램 수정 요청">배치 프로그램 수정 요청</option>
+                    <option value="권한 설정 요청">권한 설정 요청</option>
+                    <option value="인터페이스 오류 수정">인터페이스 오류 수정</option>
+                    <option value="성능 개선 요청">성능 개선 요청</option>
+                    <option value="보고서 수정 요청">보고서 수정 요청</option>
+                    <option value="메뉴 추가/수정 요청">메뉴 추가/수정 요청</option>
+                    <option value="코드 관리 요청">코드 관리 요청</option>
+                    <option value="DB 스키마 변경 요청">DB 스키마 변경 요청</option>
+                    <option value="시스템 설정 변경 요청">시스템 설정 변경 요청</option>
+                    <option value="사용자 매뉴얼 업데이트 요청">사용자 매뉴얼 업데이트 요청</option>
+                    <option value="테스트 환경 구성 요청">테스트 환경 구성 요청</option>
+                  </select>
+                </div>
               </div>
-              <div className="md:col-span-2">
+              <div className="lg:col-span-3">
                 <label className="block text-sm font-medium text-red-600 mb-1">처리 내용</label>
-                <input 
+                <textarea 
                   {...register('processContent')} 
-                  className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" 
-                  list="editProcessContentOptions"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-black font-medium resize-vertical"
+                  rows={3}
+                  placeholder="처리한 내용을 상세히 입력해주세요..."
                 />
-                <datalist id="editProcessContentOptions">
-                  <option value="시스템 오류 수정 완료" />
-                  <option value="데이터 수정 완료" />
-                  <option value="화면 개선 완료" />
-                  <option value="신규 기능 개발 완료" />
-                  <option value="배치 프로그램 수정 완료" />
-                  <option value="권한 설정 완료" />
-                  <option value="인터페이스 오류 수정 완료" />
-                  <option value="성능 개선 완료" />
-                  <option value="보고서 수정 완료" />
-                  <option value="메뉴 추가/수정 완료" />
-                  <option value="코드 관리 완료" />
-                  <option value="DB 스키마 변경 완료" />
-                  <option value="시스템 설정 변경 완료" />
-                  <option value="사용자 매뉴얼 업데이트 완료" />
-                  <option value="테스트 환경 구성 완료" />
-                  <option value="검토 중" />
-                  <option value="개발 진행 중" />
-                  <option value="테스트 진행 중" />
-                  <option value="승인 대기 중" />
-                  <option value="배포 예정" />
-                </datalist>
+                <div className="mt-1">
+                  <label className="text-xs text-gray-500">자주 사용하는 처리 내용:</label>
+                  <select 
+                    className="ml-2 text-xs border border-gray-200 rounded px-2 py-1"
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const currentValue = document.querySelector('textarea[name="processContent"]') as HTMLTextAreaElement;
+                        if (currentValue) {
+                          currentValue.value = e.target.value;
+                          currentValue.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        e.target.value = '';
+                      }
+                    }}
+                  >
+                    <option value="">선택하세요</option>
+                    <option value="시스템 오류 수정 완료">시스템 오류 수정 완료</option>
+                    <option value="데이터 수정 완료">데이터 수정 완료</option>
+                    <option value="화면 개선 완료">화면 개선 완료</option>
+                    <option value="신규 기능 개발 완료">신규 기능 개발 완료</option>
+                    <option value="배치 프로그램 수정 완료">배치 프로그램 수정 완료</option>
+                    <option value="권한 설정 완료">권한 설정 완료</option>
+                    <option value="인터페이스 오류 수정 완료">인터페이스 오류 수정 완료</option>
+                    <option value="성능 개선 완료">성능 개선 완료</option>
+                    <option value="보고서 수정 완료">보고서 수정 완료</option>
+                    <option value="메뉴 추가/수정 완료">메뉴 추가/수정 완료</option>
+                    <option value="코드 관리 완료">코드 관리 완료</option>
+                    <option value="DB 스키마 변경 완료">DB 스키마 변경 완료</option>
+                    <option value="시스템 설정 변경 완료">시스템 설정 변경 완료</option>
+                    <option value="사용자 매뉴얼 업데이트 완료">사용자 매뉴얼 업데이트 완료</option>
+                    <option value="테스트 환경 구성 완료">테스트 환경 구성 완료</option>
+                    <option value="검토 중">검토 중</option>
+                    <option value="추가 확인 필요">추가 확인 필요</option>
+                    <option value="개발 진행 중">개발 진행 중</option>
+                    <option value="테스트 진행 중">테스트 진행 중</option>
+                    <option value="승인 대기 중">승인 대기 중</option>
+                    <option value="배포 예정">배포 예정</option>
+                  </select>
+                </div>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">비고</label>
+                <label className="block text-sm font-medium text-black mb-1">비고</label>
                 <input 
                   {...register('note')} 
-                  className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" 
+                  className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" 
                   list="editNoteOptions"
                 />
                 <datalist id="editNoteOptions">
@@ -225,20 +262,20 @@ function EditModal({ record, isOpen, onClose, onSave }: {
                 </datalist>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">SM 담당자</label>
-                <input {...register('smManager')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">SM 담당자</label>
+                <input {...register('smManager')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">착수 일자</label>
-                <input {...register('startDate')} type="date" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">착수 일자</label>
+                <input {...register('startDate')} type="date" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">반영(예상)일자</label>
-                <input {...register('expectedDeployDate')} type="date" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">반영(예상)일자</label>
+                <input {...register('expectedDeployDate')} type="date" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">반영(종료) 여부</label>
-                <select {...register('deployCompleted')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm">
+                <label className="block text-sm font-medium text-black mb-1">반영(종료) 여부</label>
+                <select {...register('deployCompleted')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium">
                   <option value="">선택</option>
                   <option value="반영(처리)완료">반영(처리)완료</option>
                   <option value="진행중">진행중</option>
@@ -246,62 +283,81 @@ function EditModal({ record, isOpen, onClose, onSave }: {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">반영(종료) 일자</label>
-                <input {...register('actualDeployDate')} type="date" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">반영(종료) 일자</label>
+                <input {...register('actualDeployDate')} type="date" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">소요시간 일(day)</label>
-                <input {...register('workTimeDays')} type="number" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">소요시간 일(day)</label>
+                <input {...register('workTimeDays')} type="number" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-red-600 mb-1">소요시간 시(hour)</label>
-                <input {...register('workTimeHours')} type="number" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input {...register('workTimeHours')} type="number" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-red-600 mb-1">소요시간 분(min)</label>
-                <input {...register('workTimeMinutes')} type="number" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <input {...register('workTimeMinutes')} type="number" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">최종합(MM)</label>
-                <input {...register('totalMM')} type="number" step="0.001" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm bg-gray-100" readOnly />
+                <label className="block text-sm font-medium text-black mb-1">최종합(MM)</label>
+                <input {...register('totalMM')} type="number" step="0.001" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium bg-gray-100" readOnly />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">월별 실제 청구 MM</label>
-                <input {...register('monthlyActualBillingMM')} type="number" step="0.01" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">월별 실제 청구 MM</label>
+                <input {...register('monthlyActualBillingMM')} type="number" step="0.01" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">오류 수정 여부</label>
-                <select {...register('errorFixRequired')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm">
+                <label className="block text-sm font-medium text-black mb-1">오류 수정 여부</label>
+                <select {...register('errorFixRequired')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium">
                   <option value="">선택</option>
                   <option value="예">예</option>
                   <option value="아니오">아니오</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">작업리뷰 보고대상</label>
-                <input {...register('workReviewTarget')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">작업리뷰 보고대상</label>
+                <input {...register('workReviewTarget')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">작업리뷰 주차</label>
-                <input {...register('workReviewWeek')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" />
+                <label className="block text-sm font-medium text-black mb-1">작업리뷰 주차</label>
+                <input {...register('workReviewWeek')} className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium" />
               </div>
             </div>
             
-            <div className="flex justify-end space-x-2 pt-4">
+            <div className="flex justify-between pt-4">
               <button
                 type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                onClick={async () => {
+                  if (record && window.confirm('정말로 이 SM 이력을 삭제하시겠습니까?')) {
+                    try {
+                      await onDelete(record.id);
+                      onClose();
+                    } catch (error) {
+                      console.error('삭제 중 오류:', error);
+                      alert('삭제 중 오류가 발생했습니다.');
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
-                취소
+                삭제
               </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isSubmitting ? '저장 중...' : '저장'}
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isSubmitting ? '저장 중...' : '저장'}
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -317,6 +373,7 @@ export default function SMList() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [editingRecord, setEditingRecord] = useState<SMRecord | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSimpleView, setIsSimpleView] = useState(false);
 
   // 검색 및 정렬 기능
   const filteredRecords = records
@@ -376,26 +433,24 @@ export default function SMList() {
 
   // 삭제 확인 함수
   const handleDelete = async (id: string) => {
-    if (window.confirm('정말로 이 SM 이력을 삭제하시겠습니까?')) {
-      try {
-        await deleteRecord(id);
-        alert('SM 이력이 성공적으로 삭제되었습니다.');
-      } catch (error) {
-        console.error('삭제 중 오류가 발생했습니다:', error);
-        
-        let errorMessage = 'SM 이력 삭제에 실패했습니다.';
-        if (error instanceof Error) {
-          if (error.message.includes('Supabase')) {
-            errorMessage = `데이터베이스 오류: ${error.message}`;
-          } else if (error.message.includes('네트워크') || error.message.includes('fetch')) {
-            errorMessage = '네트워크 연결을 확인하고 다시 시도해주세요.';
-          } else {
-            errorMessage = error.message;
-          }
+    try {
+      await deleteRecord(id);
+      alert('SM 이력이 성공적으로 삭제되었습니다.');
+    } catch (error) {
+      console.error('삭제 중 오류가 발생했습니다:', error);
+      
+      let errorMessage = 'SM 이력 삭제에 실패했습니다.';
+      if (error instanceof Error) {
+        if (error.message.includes('Supabase')) {
+          errorMessage = `데이터베이스 오류: ${error.message}`;
+        } else if (error.message.includes('네트워크') || error.message.includes('fetch')) {
+          errorMessage = '네트워크 연결을 확인하고 다시 시도해주세요.';
+        } else {
+          errorMessage = error.message;
         }
-        
-        alert(errorMessage);
       }
+      
+      throw new Error(errorMessage);
     }
   };
 
@@ -573,6 +628,16 @@ export default function SMList() {
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-xl font-bold text-gray-800">SM 이력 목록</h2>
           <div className="flex items-center space-x-2">
+            <button 
+              onClick={() => setIsSimpleView(!isSimpleView)}
+              className={`px-2 py-1 rounded-md text-xs font-medium focus:outline-none focus:ring-1 ${
+                isSimpleView 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500'
+              }`}
+            >
+              {isSimpleView ? '전체 보기' : '간단히 보기'}
+            </button>
             <input
               type="text"
               value={searchTerm}
@@ -605,26 +670,30 @@ export default function SMList() {
                 <th className={`${thStyle} w-[50px]`} onClick={() => handleSort('targetMonth')}>
                   대상월 {sortField === 'targetMonth' && <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                 </th>
-                <th className={`${thStyle} w-[80px]`} onClick={() => handleSort('receiptDate')}>
+                <th className={`${thStyle} w-[120px]`} onClick={() => handleSort('receiptDate')}>
                   접수일자 {sortField === 'receiptDate' && <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                 </th>
-                <th className={`${thStyle} w-[80px]`}>요청경로</th>
-                <th className={`${thStyle} w-[80px]`}>작업근거번호</th>
-                <th className={`${thStyle} w-[80px]`} onClick={() => handleSort('requestTeam')}>
-                  요청팀 {sortField === 'requestTeam' && <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                </th>
-                <th className={`${thStyle} w-[80px]`}>요청조직구분</th>
-                <th className={`${thStyle} w-[80px]`} onClick={() => handleSort('requester')}>
-                  요청자 {sortField === 'requester' && <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                </th>
-                <th className={`${thStyle} w-[80px]`}>LG U+팀명</th>
-                <th className={`${thStyle} w-[80px]`}>시스템(파트)</th>
-                <th className={`${thStyle} w-[100px]`}>대상시스템명</th>
-                <th className={`${thStyle} w-[100px]`}>SLA SM Activity</th>
-                <th className={`${thStyle} w-[120px]`}>SLA SM Activity(상세)</th>
-                <th className={`${thStyle} w-[80px]`}>처리구분</th>
-                <th className={`${thStyle} w-[150px]`}>요청내용</th>
-                <th className={`${thStyle} w-[150px]`}>처리내용</th>
+                {!isSimpleView && (
+                  <>
+                    <th className={`${thStyle} w-[60px]`}>요청경로</th>
+                    <th className={`${thStyle} w-[60px]`}>작업근거번호</th>
+                    <th className={`${thStyle} w-[60px]`} onClick={() => handleSort('requestTeam')}>
+                      요청팀 {sortField === 'requestTeam' && <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                    </th>
+                    <th className={`${thStyle} w-[60px]`}>요청조직구분</th>
+                    <th className={`${thStyle} w-[60px]`} onClick={() => handleSort('requester')}>
+                      요청자 {sortField === 'requester' && <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                    </th>
+                    <th className={`${thStyle} w-[60px]`}>LG U+팀명</th>
+                    <th className={`${thStyle} w-[60px]`}>시스템(파트)</th>
+                    <th className={`${thStyle} w-[70px]`}>대상시스템명</th>
+                    <th className={`${thStyle} w-[70px]`}>SLA SM Activity</th>
+                    <th className={`${thStyle} w-[80px]`}>SLA SM Activity(상세)</th>
+                    <th className={`${thStyle} w-[60px]`}>처리구분</th>
+                  </>
+                )}
+                <th className={`${thStyle} w-[300px]`}>요청내용</th>
+                <th className={`${thStyle} w-[300px]`}>처리내용</th>
                 <th className={`${thStyle} w-[100px]`}>비고</th>
                 <th className={`${thStyle} w-[80px]`} onClick={() => handleSort('smManager')}>
                   SM담당자 {sortField === 'smManager' && <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
@@ -651,25 +720,29 @@ export default function SMList() {
             <tbody className="bg-white divide-y divide-gray-100">
               {filteredRecords.length > 0 ? (
                 filteredRecords.map((record) => (
-                  <tr key={record.id} className="hover:bg-gray-50">
+                  <tr key={record.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleEdit(record)}>
                     <td className={tdStyle}>{record.category}</td>
                     <td className={tdStyle}>{getFullTaskNo(record)}</td>
                     <td className={tdStyle}>{record.year}</td>
                     <td className={tdStyle}>{record.targetMonth}</td>
-                    <td className={tdStyle}>{record.receiptDate}</td>
-                    <td className={tdContentStyle}>{record.requestPath || '-'}</td>
-                    <td className={tdContentStyle}>{record.workBasisNumber || '-'}</td>
-                    <td className={tdStyle}>{record.requestTeam}</td>
-                    <td className={tdContentStyle}>{record.requestOrgType || '-'}</td>
-                    <td className={tdStyle}>{record.requester}</td>
-                    <td className={tdContentStyle}>{record.lgUplusTeamName || '-'}</td>
-                    <td className={tdContentStyle}>{record.systemPart || '-'}</td>
-                    <td className={tdContentStyle}>{record.targetSystemName || '-'}</td>
-                    <td className={tdContentStyle}>{record.slaSmActivity || '-'}</td>
-                    <td className={tdContentStyle}>{record.slaSmActivityDetail || '-'}</td>
-                    <td className={tdStyle}>{record.processType || 'SM운영'}</td>
-                    <td className={tdContentStyle}>{record.requestContent}</td>
-                    <td className={tdContentStyle}>{record.processContent || '-'}</td>
+                    <td className={`${tdStyle} font-semibold`}>{record.receiptDate}</td>
+                    {!isSimpleView && (
+                      <>
+                        <td className={tdContentStyle}>{record.requestPath || '-'}</td>
+                        <td className={tdContentStyle}>{record.workBasisNumber || '-'}</td>
+                        <td className={tdStyle}>{record.requestTeam}</td>
+                        <td className={tdContentStyle}>{record.requestOrgType || '-'}</td>
+                        <td className={tdStyle}>{record.requester}</td>
+                        <td className={tdContentStyle}>{record.lgUplusTeamName || '-'}</td>
+                        <td className={tdContentStyle}>{record.systemPart || '-'}</td>
+                        <td className={tdContentStyle}>{record.targetSystemName || '-'}</td>
+                        <td className={tdContentStyle}>{record.slaSmActivity || '-'}</td>
+                        <td className={tdContentStyle}>{record.slaSmActivityDetail || '-'}</td>
+                        <td className={tdStyle}>{record.processType || 'SM운영'}</td>
+                      </>
+                    )}
+                    <td className={tdLongContentStyle} title={record.requestContent}>{record.requestContent}</td>
+                    <td className={tdLongContentStyle} title={record.processContent || '-'}>{record.processContent || '-'}</td>
                     <td className={tdContentStyle}>{record.note || '-'}</td>
                     <td className={tdStyle}>{record.smManager}</td>
                     <td className={tdStyle}>{record.startDate || '-'}</td>
@@ -685,24 +758,15 @@ export default function SMList() {
                     <td className={tdContentStyle}>{record.workReviewTarget || '-'}</td>
                     <td className={tdStyle}>{record.workReviewWeek || '-'}</td>
                     <td className="px-2 py-1 whitespace-nowrap text-right text-xs space-x-1">
-                      <button
-                        onClick={() => handleEdit(record)}
-                        className="text-blue-600 hover:text-blue-900 font-medium"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleDelete(record.id)}
-                        className="text-red-600 hover:text-red-900 font-medium"
-                      >
-                        삭제
-                      </button>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <span className="text-gray-400 text-xs">클릭하여 수정</span>
+                      </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={33} className="px-2 py-2 text-center text-xs font-medium text-gray-800">
+                  <td colSpan={isSimpleView ? 22 : 33} className="px-2 py-2 text-center text-xs font-medium text-gray-800">
                     {searchTerm ? '검색 결과가 없습니다.' : 'SM 이력이 없습니다. 새로운 이력을 등록해주세요.'}
                   </td>
                 </tr>
@@ -722,6 +786,7 @@ export default function SMList() {
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
         onSave={handleSaveEdit}
+        onDelete={handleDelete}
       />
     </>
   );

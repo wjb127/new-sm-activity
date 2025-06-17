@@ -56,25 +56,60 @@ npm run dev
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 기능 소개
+
+### 📋 SM 이력 관리
+- SM 작업 이력 등록, 조회, 수정, 삭제
+- 엑셀 파일 내보내기/가져오기
+- 실시간 데이터베이스 연동 (Supabase)
+
+### 📅 스케줄러 기능 (NEW!)
+- **자동 데이터 생성**: 설정된 스케줄에 따라 DB에 자동으로 SM 이력 추가
+- **Cron 표현식 지원**: 복잡한 스케줄링 패턴 설정 가능
+- **미리 정의된 템플릿**: 주간 점검, 월간 보고서 등 자주 사용되는 작업 템플릿
+- **실시간 관리**: 웹 UI에서 스케줄 추가/수정/삭제/활성화/비활성화
+- **API 지원**: 외부 시스템에서 스케줄 작업 트리거 가능
+
+### 📄 파일 관리
+- 첨부 파일 업로드/다운로드
+- 문서 관리 및 버전 관리
+
 ## Getting Started
 
 First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 스케줄러 사용법
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **웹 UI에서 스케줄 설정**:
+   - "스케줄러" 탭으로 이동
+   - "새 스케줄 추가" 버튼 클릭
+   - 템플릿 선택 또는 사용자 정의 설정
+   - Cron 표현식 입력 (예: `0 9 * * 1` = 매주 월요일 오전 9시)
+
+2. **API를 통한 수동 실행**:
+   ```bash
+   curl -X POST http://localhost:3000/api/scheduler \
+     -H "Content-Type: application/json" \
+     -d '{
+       "taskName": "테스트 작업",
+       "template": {
+         "category": "기타",
+         "slaSmActivity": "테스트"
+       }
+     }'
+   ```
+
+3. **스케줄 예제**:
+   - `0 9 * * 1` - 매주 월요일 오전 9시
+   - `0 17 1 * *` - 매월 1일 오후 5시
+   - `0 8 * * *` - 매일 오전 8시
+   - `*/30 * * * *` - 30분마다
 
 ## Learn More
 
