@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/scheduler/dashboard",
-      "schedule": "30 23 * * 0-4"
+      "schedule": "10 0 * * 1-5"
     },
     {
-      "path": "/api/scheduler/uplan",
-      "schedule": "30 23 * * 0-4"
+      "path": "/api/scheduler/uplan", 
+      "schedule": "10 0 * * 1-5"
     }
   ]
 }
