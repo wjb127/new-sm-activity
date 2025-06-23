@@ -2,12 +2,12 @@
   "crons": [
     {
       "path": "/api/scheduler/dashboard",
-      "schedule": "0 8 * * 1-5",
+      "schedule": "15 9 * * 1-5",
       "timezone": "Asia/Seoul"
     },
     {
       "path": "/api/scheduler/uplan", 
-      "schedule": "0 8 * * 1-5",
+      "schedule": "15 9 * * 1-5",
       "timezone": "Asia/Seoul"
     }
   ]
