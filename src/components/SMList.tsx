@@ -775,8 +775,20 @@ export default function SMList() {
           </table>
         </div>
         
-        <div className="mt-2 text-xs text-gray-500">
-          총 {filteredRecords.length}개의 이력이 있습니다.
+        <div className="mt-2 flex justify-between items-center">
+          <div className="text-xs text-gray-500">
+            총 {filteredRecords.length}개의 이력이 있습니다.
+          </div>
+          <button 
+            onClick={() => setIsSimpleView(!isSimpleView)}
+            className={`px-2 py-1 rounded-md text-xs font-medium focus:outline-none focus:ring-1 ${
+              isSimpleView 
+                ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500'
+            }`}
+          >
+            {isSimpleView ? '전체 보기' : '간단히 보기'}
+          </button>
         </div>
       </div>
 
