@@ -29,7 +29,7 @@ export async function GET() {
       processType: 'SM운영',
       requestContent: 'U+PLAN 조간점검',
       processContent: 'U+PLAN 조간점검',
-      smManager: '위승빈',
+      smManager: '위승빈 사원',
       deployCompleted: '반영(처리)완료',
       workTimeDays: '0',
       workTimeHours: '0',

@@ -29,7 +29,7 @@ export async function GET() {
       processType: 'SM운영',
       requestContent: '일일 시스템 모니터링 및 상태 점검',
       processContent: '시스템 정상 운영 확인 및 로그 점검 완료',
-      smManager: '위승빈',
+      smManager: '위승빈 사원',
       deployCompleted: '반영(처리)완료',
       workTimeDays: '0',
       workTimeHours: '1',
