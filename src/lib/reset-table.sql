@@ -72,7 +72,7 @@ INSERT INTO sm_records (
   category, taskno, year, targetmonth, receiptdate, requestteam, 
   requester, requestcontent, smmanager, processtype
 ) VALUES (
-  '대시보드', '1', '2024', '12', '2024-12-20', 
+  '대시보드', '1', '2024', '12월', '2024-12-20', 
   '개발팀', '테스트 사용자', '테스트 요청 내용입니다.', 
   '위승빈 선임', 'SM운영'
 );

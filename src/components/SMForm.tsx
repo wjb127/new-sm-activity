@@ -58,7 +58,7 @@ export default function SMForm() {
       try {
         const date = new Date(receiptDate);
         const year = date.getFullYear().toString();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const month = `${date.getMonth() + 1}월`;
         
         setValue('year', year);
         setValue('targetMonth', month);

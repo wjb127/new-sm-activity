@@ -11,7 +11,7 @@ export async function GET() {
     
     const now = new Date();
     const currentYear = format(now, 'yyyy');
-    const currentMonth = format(now, 'yyyy-MM');
+    const currentMonth = `${now.getMonth() + 1}월`;
     const currentDate = format(now, 'yyyy-MM-dd');
     
     // 고유한 TASK NO 생성
