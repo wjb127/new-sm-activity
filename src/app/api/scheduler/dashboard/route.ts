@@ -29,7 +29,7 @@ export async function GET() {
       processType: 'SM운영',
       requestContent: '대시보드/결합/채권재고 조간점검',
       processContent: '대시보드/결합/채권재고 조간점검',
-      smManager: '위승빈 사원',
+      smManager: '위승빈 선임',
       deployCompleted: '반영(처리)완료',
       workTimeDays: '0',
       workTimeHours: '0',

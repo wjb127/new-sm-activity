@@ -119,7 +119,7 @@ export default function SMForm() {
       setValue('receiptDate', today);
       setValue('startDate', today);
       setValue('expectedDeployDate', today);
-      setValue('smManager', '위승빈 사원');
+      setValue('smManager', '위승빈 선임');
       setValue('processType', 'SM운영');
     }
   }, [today, setValue]);
