@@ -374,10 +374,29 @@ export default function SMList() {
   const [editingRecord, setEditingRecord] = useState<SMRecord | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSimpleView, setIsSimpleView] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+
+  // 연도와 월 목록 추출
+  const years = Array.from(new Set(records.map(r => r.year))).sort().reverse();
+  const months = Array.from(new Set(records
+    .filter(r => selectedYear === 'all' || r.year === selectedYear)
+    .map(r => r.targetMonth))).sort();
 
   // 검색 및 정렬 기능
   const filteredRecords = records
     .filter(record => {
+      // 연도 필터링
+      if (selectedYear !== 'all' && record.year !== selectedYear) {
+        return false;
+      }
+      
+      // 월 필터링
+      if (selectedMonth !== 'all' && record.targetMonth !== selectedMonth) {
+        return false;
+      }
+      
+      // 검색어 필터링
       const searchLower = searchTerm.toLowerCase();
       return (
         record.taskNo.toLowerCase().includes(searchLower) ||
@@ -651,6 +670,60 @@ export default function SMList() {
             >
               엑셀 다운로드
             </button>
+          </div>
+        </div>
+
+        {/* 연도/월 필터 추가 */}
+        <div className="flex items-center space-x-3 mb-3">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">연도:</label>
+            <select 
+              value={selectedYear}
+              onChange={(e) => {
+                setSelectedYear(e.target.value);
+                setSelectedMonth('all'); // 연도 변경 시 월 선택 초기화
+              }}
+              className="px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="all">전체</option>
+              {years.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-gray-700">대상월:</label>
+            <select 
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              <option value="all">전체</option>
+              {months.map(month => (
+                <option key={month} value={month}>{month}</option>
+              ))}
+            </select>
+          </div>
+
+          {(selectedYear !== 'all' || selectedMonth !== 'all') && (
+            <button
+              onClick={() => {
+                setSelectedYear('all');
+                setSelectedMonth('all');
+              }}
+              className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+            >
+              필터 초기화
+            </button>
+          )}
+          
+          <div className="ml-auto text-xs text-gray-500">
+            {selectedYear !== 'all' && selectedMonth !== 'all' 
+              ? `${selectedYear}년 ${selectedMonth}월` 
+              : selectedYear !== 'all' 
+              ? `${selectedYear}년 전체` 
+              : '전체 기간'} 데이터 표시 중
           </div>
         </div>
 
