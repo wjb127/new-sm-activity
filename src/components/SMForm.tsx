@@ -104,8 +104,9 @@ export default function SMForm() {
     const hours = parseFloat(workTimeHours) || 0;
     const minutes = parseFloat(workTimeMinutes) || 0;
     
-    // 최종합 = 일/21 + 시/21/8 + 분/21/8/60
-    const totalMM = days / 21 + hours / (21 * 8) + minutes / (21 * 8 * 60);
+    // 최종합 = 일/21 + 시/8/21 + 분/60/8/21
+    // 1MM = 21일, 1일 = 8시간, 1시간 = 60분
+    const totalMM = days / 21 + hours / (8 * 21) + minutes / (60 * 8 * 21);
     
     // 소수점 3자리까지 반올림
     const roundedTotalMM = Math.round(totalMM * 1000) / 1000;
