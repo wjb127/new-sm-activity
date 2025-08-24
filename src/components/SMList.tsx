@@ -440,6 +440,12 @@ export default function SMList() {
       }
     });
 
+  // 필터링된 레코드의 최종합(MM) 계산
+  const totalMM = filteredRecords.reduce((sum, record) => {
+    const mm = parseFloat(record.totalMM) || 0;
+    return sum + mm;
+  }, 0);
+
   // 정렬 변경 함수
   const handleSort = (field: keyof SMRecord) => {
     if (field === sortField) {
@@ -718,12 +724,17 @@ export default function SMList() {
             </button>
           )}
           
-          <div className="ml-auto text-xs text-gray-500">
-            {selectedYear !== 'all' && selectedMonth !== 'all' 
-              ? `${selectedYear}년 ${selectedMonth}월` 
-              : selectedYear !== 'all' 
-              ? `${selectedYear}년 전체` 
-              : '전체 기간'} 데이터 표시 중
+          <div className="ml-auto flex items-center space-x-4">
+            <div className="text-xs text-gray-500">
+              {selectedYear !== 'all' && selectedMonth !== 'all' 
+                ? `${selectedYear}년 ${selectedMonth}월` 
+                : selectedYear !== 'all' 
+                ? `${selectedYear}년 전체` 
+                : '전체 기간'} 데이터 표시 중
+            </div>
+            <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">
+              최종합(MM): {totalMM.toFixed(3)}
+            </div>
           </div>
         </div>
 
@@ -849,8 +860,13 @@ export default function SMList() {
         </div>
         
         <div className="mt-2 flex justify-between items-center">
-          <div className="text-xs text-gray-500">
-            총 {filteredRecords.length}개의 이력이 있습니다.
+          <div className="flex items-center space-x-4">
+            <div className="text-xs text-gray-500">
+              총 {filteredRecords.length}개의 이력
+            </div>
+            <div className="text-xs font-medium text-blue-600">
+              최종합(MM): {totalMM.toFixed(3)}
+            </div>
           </div>
           <button 
             onClick={() => setIsSimpleView(!isSimpleView)}
