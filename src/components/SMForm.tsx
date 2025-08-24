@@ -108,8 +108,8 @@ export default function SMForm() {
     // 1MM = 21일, 1일 = 8시간, 1시간 = 60분
     const totalMM = days / 21 + hours / (8 * 21) + minutes / (60 * 8 * 21);
     
-    // 소수점 3자리까지 반올림
-    const roundedTotalMM = Math.round(totalMM * 1000) / 1000;
+    // 소수점 10자리까지 반올림
+    const roundedTotalMM = Math.round(totalMM * 10000000000) / 10000000000;
     
     setValue('totalMM', roundedTotalMM.toString());
   }, [workTimeDays, workTimeHours, workTimeMinutes, setValue]);
@@ -633,7 +633,7 @@ export default function SMForm() {
               <input
                 {...register('totalMM')}
                 type="number"
-                step="0.001"
+                step="0.0000000001"
                 min="0"
                 className={readOnlyInputStyle}
                 placeholder="0.000"

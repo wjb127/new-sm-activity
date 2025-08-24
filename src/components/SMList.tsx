@@ -48,8 +48,8 @@ function EditModal({ record, isOpen, onClose, onSave, onDelete }: {
     // 1MM = 21일, 1일 = 8시간, 1시간 = 60분
     const totalMM = days / 21 + hours / (8 * 21) + minutes / (60 * 8 * 21);
     
-    // 소수점 3자리까지 반올림
-    const roundedTotalMM = Math.round(totalMM * 1000) / 1000;
+    // 소수점 10자리까지 반올림
+    const roundedTotalMM = Math.round(totalMM * 10000000000) / 10000000000;
     
     setValue('totalMM', roundedTotalMM.toString());
   }, [workTimeDays, workTimeHours, workTimeMinutes, setValue]);
@@ -301,7 +301,7 @@ function EditModal({ record, isOpen, onClose, onSave, onDelete }: {
               </div>
               <div>
                 <label className="block text-sm font-medium text-black mb-1">최종합(MM)</label>
-                <input {...register('totalMM')} type="number" step="0.001" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium bg-gray-100" readOnly />
+                <input {...register('totalMM')} type="number" step="0.0000000001" className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm text-black font-medium bg-gray-100" readOnly />
               </div>
               <div>
                 <label className="block text-sm font-medium text-black mb-1">월별 실제 청구 MM</label>
@@ -570,7 +570,7 @@ export default function SMList() {
         record.workTimeDays || '',
         record.workTimeHours || '',
         record.workTimeMinutes || '',
-        record.totalMM || '',
+        record.totalMM ? parseFloat(record.totalMM).toFixed(10) : '',
         record.monthlyActualBillingMM || '',
         record.errorFixRequired || '',
         wrapIfComma(record.workReviewTarget || ''),
@@ -734,7 +734,7 @@ export default function SMList() {
                 : '전체 기간'} 데이터 표시 중
             </div>
             <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">
-              최종합(MM): {totalMM.toFixed(3)}
+              최종합(MM): {totalMM.toFixed(10)}
             </div>
           </div>
         </div>
@@ -837,7 +837,7 @@ export default function SMList() {
                     <td className={tdStyle}>{record.workTimeDays || '-'}</td>
                     <td className={tdStyle}>{record.workTimeHours || '-'}</td>
                     <td className={tdStyle}>{record.workTimeMinutes || '-'}</td>
-                    <td className={tdStyle}>{record.totalMM || '-'}</td>
+                    <td className={tdStyle}>{record.totalMM ? parseFloat(record.totalMM).toFixed(10) : '-'}</td>
                     <td className={tdStyle}>{record.monthlyActualBillingMM || '-'}</td>
                     <td className={tdStyle}>{record.errorFixRequired || '-'}</td>
                     <td className={tdContentStyle}>{record.workReviewTarget || '-'}</td>
@@ -866,7 +866,7 @@ export default function SMList() {
               총 {filteredRecords.length}개의 이력
             </div>
             <div className="text-xs font-medium text-blue-600">
-              최종합(MM): {totalMM.toFixed(3)}
+              최종합(MM): {totalMM.toFixed(10)}
             </div>
           </div>
           <button 
