@@ -2,6 +2,7 @@
 
 import { SMProvider } from '@/context/SMContext';
 import SMForm from '@/components/SMForm';
+import SMList from '@/components/SMList';
 import Link from 'next/link';
 
 export default function Home() {
@@ -12,19 +13,19 @@ export default function Home() {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-800">SM 이력 등록</h1>
             <div className="space-x-2">
-              <Link 
+              <Link
                 href="/history"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
               >
                 이력 목록
               </Link>
-              <Link 
+              <Link
                 href="/files"
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm font-medium"
               >
                 문서 관리
               </Link>
-              <Link 
+              <Link
                 href="/scheduler"
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm font-medium"
               >
@@ -32,8 +33,12 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          
+
           <SMForm />
+
+          <div className="mt-6">
+            <SMList />
+          </div>
         </div>
       </main>
     </SMProvider>
