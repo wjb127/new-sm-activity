@@ -50,7 +50,7 @@ export const DEFAULT_TEMPLATES = {
     workTimeDays: '0',
     workTimeHours: '0',
     workTimeMinutes: '30',
-    totalMM: '0.062',
+    totalMM: '0.0029761905',
 
   },
   uplan_check: {
@@ -69,7 +69,7 @@ export const DEFAULT_TEMPLATES = {
     workTimeDays: '0',
     workTimeHours: '0',
     workTimeMinutes: '30',
-    totalMM: '0.062'
+    totalMM: '0.0029761905'
   }
 };
 

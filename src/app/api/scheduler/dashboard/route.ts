@@ -34,7 +34,7 @@ export async function GET() {
       workTimeDays: '0',
       workTimeHours: '0',
       workTimeMinutes: '30',
-      totalMM: '0.062'
+      totalMM: '0.0029761905'
     };
 
     console.log('📋 [VERCEL-CRON] 대시보드 템플릿:', template);
