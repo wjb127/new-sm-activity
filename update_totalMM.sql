@@ -56,20 +56,20 @@ SELECT
   id,
   category,
   taskno,
-  "requestContent",
-  "workTimeDays",
-  "workTimeHours",
-  "workTimeMinutes",
+  requestcontent,
+  worktimedays,
+  worktimehours,
+  worktimeminutes,
   totalmm,
-  "receiptDate",
-  "createdAt"
+  receiptdate,
+  createdat
 FROM sm_records
 WHERE
-  "workTimeMinutes" = '30'
-  AND "workTimeHours" = '0'
-  AND "workTimeDays" = '0'
+  worktimeminutes = '30'
+  AND worktimehours = '0'
+  AND worktimedays = '0'
   AND totalmm = '0.062'
-ORDER BY "createdAt" DESC;
+ORDER BY createdat DESC;
 
 -- 2. 잘못된 totalMM 값 수정 (0.062 → 0.0029761905)
 -- 주의: 아래 쿼리를 실행하기 전에 반드시 위의 SELECT 쿼리로 데이터를 확인하세요!
@@ -77,9 +77,9 @@ ORDER BY "createdAt" DESC;
 UPDATE sm_records
 SET totalmm = '0.0029761905'
 WHERE
-  "workTimeMinutes" = '30'
-  AND "workTimeHours" = '0'
-  AND "workTimeDays" = '0'
+  worktimeminutes = '30'
+  AND worktimehours = '0'
+  AND worktimedays = '0'
   AND totalmm = '0.062';
 
 -- 3. 수정 결과 확인
@@ -87,19 +87,19 @@ SELECT
   id,
   category,
   taskno,
-  "requestContent",
-  "workTimeDays",
-  "workTimeHours",
-  "workTimeMinutes",
+  requestcontent,
+  worktimedays,
+  worktimehours,
+  worktimeminutes,
   totalmm,
-  "receiptDate",
-  "createdAt"
+  receiptdate,
+  createdat
 FROM sm_records
 WHERE
-  "workTimeMinutes" = '30'
-  AND "workTimeHours" = '0'
-  AND "workTimeDays" = '0'
-ORDER BY "createdAt" DESC;
+  worktimeminutes = '30'
+  AND worktimehours = '0'
+  AND worktimedays = '0'
+ORDER BY createdat DESC;
 
 -- 4. (선택사항) 특정 카테고리만 수정하고 싶은 경우
 -- 대시보드 카테고리만 수정
@@ -107,9 +107,9 @@ UPDATE sm_records
 SET totalmm = '0.0029761905'
 WHERE
   category = '대시보드'
-  AND "workTimeMinutes" = '30'
-  AND "workTimeHours" = '0'
-  AND "workTimeDays" = '0'
+  AND worktimeminutes = '30'
+  AND worktimehours = '0'
+  AND worktimedays = '0'
   AND totalmm = '0.062';
 
 -- PLAN 카테고리만 수정
@@ -117,9 +117,9 @@ UPDATE sm_records
 SET totalmm = '0.0029761905'
 WHERE
   category = 'PLAN'
-  AND "workTimeMinutes" = '30'
-  AND "workTimeHours" = '0'
-  AND "workTimeDays" = '0'
+  AND worktimeminutes = '30'
+  AND worktimehours = '0'
+  AND worktimedays = '0'
   AND totalmm = '0.062';
 
 -- 5. 전체 통계 확인
@@ -129,9 +129,9 @@ SELECT
   SUM(CAST(totalmm AS DECIMAL)) as total_mm_sum
 FROM sm_records
 WHERE
-  "workTimeMinutes" = '30'
-  AND "workTimeHours" = '0'
-  AND "workTimeDays" = '0'
+  worktimeminutes = '30'
+  AND worktimehours = '0'
+  AND worktimedays = '0'
 GROUP BY category
 ORDER BY category;
 
